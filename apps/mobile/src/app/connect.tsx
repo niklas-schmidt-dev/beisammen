@@ -9,6 +9,7 @@ import { normalizeBaseUrl } from '@beisammen/contracts';
 import { Button, Card } from '@/components/ui';
 import { FontSize, Spacing } from '@/constants/theme';
 import { useSession } from '@/features/auth/session-provider';
+import { defaultInstanceConfig } from '@/features/instances/catalog';
 import { resolveInstanceConfig } from '@/features/instances/discovery';
 import { useMarkInteractive } from '@/features/observe/interactive';
 import { useTheme } from '@/hooks/use-theme';
@@ -37,7 +38,11 @@ export default function ConnectScreen() {
     instance?: string | string[];
   }>();
   const inviteToken = firstParam(params.invite)?.trim() ?? '';
-  const targetInstance = firstParam(params.instance)?.trim() ?? '';
+  const explicitInstance = firstParam(params.instance)?.trim() ?? '';
+  // A link without an explicit instance always means the built-in cloud
+  // instance — never whatever (possibly self-hosted) instance happens to be
+  // active on this device.
+  const targetInstance = explicitInstance || defaultInstanceConfig.instance.baseUrl;
   const gt = useGT();
   const m = useMessages();
   const [error, setError] = useState<string | null>(null);
@@ -57,26 +62,25 @@ export default function ConnectScreen() {
 
     async function handleLink() {
       const hasInviteToken = inviteToken.length > 0;
-      const hasTargetInstance = targetInstance.length > 0;
+      const hasExplicitInstance = explicitInstance.length > 0;
 
       setError(null);
       setIsProcessing(true);
       setStatusText(statusMessages.preparing);
 
-      if (!hasInviteToken && !hasTargetInstance) {
+      if (!hasInviteToken && !hasExplicitInstance) {
         setError(errorMessages.missingParams);
         setIsProcessing(false);
         return;
       }
 
-      if (
-        hasTargetInstance &&
-        normalizeBaseUrl(targetInstance) !== normalizeBaseUrl(instance.instance.baseUrl)
-      ) {
+      if (normalizeBaseUrl(targetInstance) !== normalizeBaseUrl(instance.instance.baseUrl)) {
         setStatusText(statusMessages.checkingInstance);
-        const nextInstance = await resolveInstanceConfig(targetInstance, {
-          signal: controller.signal,
-        });
+        // The built-in cloud config is trusted as shipped; only foreign
+        // instances need their discovery manifest validated first.
+        const nextInstance = hasExplicitInstance
+          ? await resolveInstanceConfig(targetInstance, { signal: controller.signal })
+          : defaultInstanceConfig;
 
         setStatusText(statusMessages.switchingInstance);
         await setActiveInstance(
@@ -118,6 +122,7 @@ export default function ConnectScreen() {
       controller.abort();
     };
   }, [
+    explicitInstance,
     instance.instance.baseUrl,
     inviteToken,
     isReady,

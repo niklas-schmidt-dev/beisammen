@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
+import { ConnectPage } from '@/pages/ConnectPage';
 import { DeleteAccountPage } from '@/pages/DeleteAccountPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
@@ -44,6 +45,9 @@ export default function App() {
         <Route path="/en/privacy" element={<PrivacyPage locale="en" />} />
         <Route path="/delete-account" element={<DeleteAccountPage locale="de" />} />
         <Route path="/en/delete-account" element={<DeleteAccountPage locale="en" />} />
+        {/* Invite / instance hand-off into the app (Universal Link / App Link target). */}
+        <Route path="/connect" element={<ConnectPage />} />
+        <Route path="/en/connect" element={<ConnectPage locale="en" />} />
         {/* The old Astro site advertised /de/ in hreflang links — keep it working. */}
         <Route path="/de" element={<LegacyRedirect to="/" />} />
         <Route path="/de/privacy" element={<LegacyRedirect to="/privacy" />} />

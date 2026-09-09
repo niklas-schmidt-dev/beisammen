@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
-import { MenuIcon } from 'lucide-react';
-import { Logo } from '@/components/Logo';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router";
+import { MenuIcon } from "lucide-react";
+import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -10,11 +10,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
-import { dict, LANG_STORAGE_KEY, localePath, type Locale } from '@/i18n/ui';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/sheet";
+import { dict, LANG_STORAGE_KEY, localePath, type Locale } from "@/i18n/ui";
+import { cn } from "@/lib/utils";
 
-type PagePath = '' | 'privacy' | 'delete-account';
+type PagePath = "" | "privacy" | "delete-account" | "connect";
 
 type SiteHeaderProps = {
   locale: Locale;
@@ -30,41 +30,59 @@ function storeLocale(locale: Locale) {
   }
 }
 
-export function SiteHeader({ locale, page = '', showNav = true }: SiteHeaderProps) {
+export function SiteHeader({
+  locale,
+  page = "",
+  showNav = true,
+}: SiteHeaderProps) {
   const t = dict[locale];
-  const altLocale: Locale = locale === 'en' ? 'de' : 'en';
-  const homeHref = localePath(locale, '');
-  const altHref = localePath(altLocale, page);
+  const altLocale: Locale = locale === "en" ? "de" : "en";
+  const location = useLocation();
+  const homeHref = localePath(locale, "");
+  // The connect page carries the invite in its query string — keep it when
+  // switching languages so the hand-off still works afterwards.
+  const altHref =
+    page === "connect"
+      ? { pathname: localePath(altLocale, page), search: location.search }
+      : localePath(altLocale, page);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const navItems = [
-    { id: 'why', label: t.nav.why },
-    { id: 'circles', label: t.nav.circles },
-    { id: 'promises', label: t.nav.promises },
-    { id: 'download', label: t.nav.download },
+    { id: "why", label: t.nav.why },
+    { id: "circles", label: t.nav.circles },
+    { id: "promises", label: t.nav.promises },
+    { id: "download", label: t.nav.download },
   ];
 
   const langSwitch = (
     <span className="flex items-center gap-1 font-mono text-xs tracking-wide">
-      {locale === 'de' ? (
+      {locale === "de" ? (
         <>
           <span className="font-medium text-ink">DE</span>
           <span className="text-ink/40">/</span>
-          <Link to={altHref} onClick={() => storeLocale('en')} className="text-ink/40 hover:text-ink">
+          <Link
+            to={altHref}
+            onClick={() => storeLocale("en")}
+            className="text-ink/40 hover:text-ink"
+          >
             EN
           </Link>
         </>
       ) : (
         <>
-          <Link to={altHref} onClick={() => storeLocale('de')} className="text-ink/40 hover:text-ink">
+          <Link
+            to={altHref}
+            onClick={() => storeLocale("de")}
+            className="text-ink/40 hover:text-ink"
+          >
             DE
           </Link>
           <span className="text-ink/40">/</span>
@@ -77,20 +95,27 @@ export function SiteHeader({ locale, page = '', showNav = true }: SiteHeaderProp
   return (
     <header
       className={cn(
-        'sticky top-0 z-60 border-b border-transparent px-4 py-3 backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200 sm:px-6 lg:px-8',
-        scrolled ? 'border-ink/10 bg-paper/90' : 'bg-paper/70',
+        "sticky top-0 z-60 border-b border-transparent px-4 py-3 backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200 sm:px-6 lg:px-8",
+        scrolled ? "border-ink/10 bg-paper/90" : "bg-paper/70",
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center">
         <div className="flex flex-1 items-center">
-          <Link to={homeHref} aria-label="Homepage" onClick={() => storeLocale(locale)}>
+          <Link
+            to={homeHref}
+            aria-label="Homepage"
+            onClick={() => storeLocale(locale)}
+          >
             <Logo size={24} />
           </Link>
         </div>
 
         {showNav && (
           <nav aria-label="Primary" className="max-lg:hidden">
-            <ul role="list" className="flex items-center gap-8 text-sm font-medium text-ink/70">
+            <ul
+              role="list"
+              className="flex items-center gap-8 text-sm font-medium text-ink/70"
+            >
               {navItems.map((item) => (
                 <li key={item.id}>
                   <Link

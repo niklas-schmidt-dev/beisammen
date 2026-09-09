@@ -33,7 +33,11 @@ Private and noncommercial self-hosting is allowed under the repository license.
 
 - users can connect the central Beisammen mobile app to a self-hosted instance
 - invite links can point the app to a self-hosted instance with
-  `beisammen://connect?instance=https://your-host`
+  `https://beisammen.app/connect?instance=https://your-host` (the website
+  hands the parameters to the app via Universal Links / App Links; the legacy
+  `beisammen://connect?instance=…` scheme keeps working)
+- links without an `instance` parameter always target the built-in cloud
+  instance, never the instance currently active on the device
 - the instance must serve a public discovery manifest at
   `https://your-host/.well-known/beisammen-instance.json`
 - the manifest tells the app which Convex client URL, Clerk publishable key,

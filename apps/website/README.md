@@ -48,6 +48,8 @@ assets.
 | `/en/`               | English landing page |
 | `/privacy/`, `/en/privacy/` | Privacy policy |
 | `/delete-account/`, `/en/delete-account/` | Account deletion instructions |
+| `/connect/`, `/en/connect/` | Invite / instance hand-off into the app. Universal Links (iOS) and App Links (Android) claim this path when the app is installed; the page itself is the fallback with an "open in app" button (custom scheme) and store badges. Not indexed. |
+| `/.well-known/apple-app-site-association`, `/.well-known/assetlinks.json` | App association files (served as JSON by `worker/index.ts`). The Android entry uses the Play App Signing certificate, verified in Play Console on 2026-09-09. Update it if the signing key changes. |
 
 Manual language switcher clicks write `beisammen:lang` to `localStorage`, so an
 override is remembered on future visits to `/`.

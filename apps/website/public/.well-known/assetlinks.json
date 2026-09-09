@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.beisammen.app",
+      "sha256_cert_fingerprints": [
+        "CD:44:73:69:0F:B9:D9:9A:77:11:C2:8A:74:30:01:09:6B:83:55:99:1B:FB:7F:D0:A1:9A:62:F2:B2:F8:2A:74"
+      ]
+    }
+  }
+]

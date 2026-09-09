@@ -111,7 +111,10 @@ application and an S3-compatible bucket (AWS S3, R2, B2 S3, or MinIO).
 
 ## Self-Hosted Golden Path
 
-- Connect the central app with `beisammen://connect?instance=<self-host-url>`.
+- Connect the central app with
+  `https://beisammen.app/connect?instance=<self-host-url>` (tapped from a chat
+  app, so the Universal Link / App Link path is exercised) and with the legacy
+  `beisammen://connect?instance=<self-host-url>` scheme.
 - Confirm the discovered manifest switches the active instance before sign-in.
 - Raise `PUBLIC_MINIMUM_APP_VERSION` above the installed app version in a test
   deployment and confirm the connect link shows an update-required error instead

@@ -28,8 +28,10 @@
   Convex client URL, Clerk publishable key,
   storage provider capabilities, deployment kind, billing provider/plan
   summaries, and minimum app version
-- `beisammen://connect?instance=https://your-host` switches the active
-  instance locally after validating the manifest
+- `https://beisammen.app/connect?instance=https://your-host` (or the legacy
+  `beisammen://connect?…` scheme) switches the active instance locally after
+  validating the manifest; without `instance` the built-in cloud instance is
+  used
 - invite links can include both `instance` and `invite`; invite tokens are
   stored under the selected instance URL
 

@@ -94,6 +94,31 @@ export default function CirclesScreen() {
             </Card>
           </AnimatedPressable>
         </Animated.View>
+
+        <Animated.View entering={enterSection(3)}>
+          <AnimatedPressable
+            accessibilityRole="button"
+            accessibilityLabel={gt('Circle beitreten')}
+            onPress={() => router.push('/settings/join' as never)}
+          >
+            <Card style={styles.createCard}>
+              <View style={[styles.createIcon, { backgroundColor: theme.primaryMuted }]}>
+                <Ionicons name="mail-open-outline" size={19} color={theme.primary} />
+              </View>
+              <View style={styles.createCopy}>
+                <T>
+                  <Text style={[styles.createTitle, { color: theme.text }]}>
+                    Mit Einladung beitreten
+                  </Text>
+                  <Text style={[styles.createMeta, { color: theme.textSecondary }]}>
+                    Einladungslink oder Code einfügen.
+                  </Text>
+                </T>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={16} color={theme.textTertiary} />
+            </Card>
+          </AnimatedPressable>
+        </Animated.View>
       </Animated.ScrollView>
     </SafeAreaView>
   );

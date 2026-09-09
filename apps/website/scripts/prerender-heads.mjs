@@ -43,6 +43,20 @@ const ROUTES = [
     title: 'Delete account · beisammen',
     description: 'How to permanently delete your beisammen account and its data.',
   },
+  {
+    path: 'connect',
+    lang: 'de',
+    title: 'In beisammen öffnen',
+    description: 'Öffnet einen Einladungs- oder Instanz-Link in der beisammen-App.',
+    robots: 'noindex, nofollow',
+  },
+  {
+    path: 'en/connect',
+    lang: 'en',
+    title: 'Open in beisammen',
+    description: 'Opens an invitation or instance link in the beisammen app.',
+    robots: 'noindex, nofollow',
+  },
 ];
 
 const escapeAttr = (value) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
@@ -62,8 +76,11 @@ for (const route of ROUTES) {
       /(<meta\s+property="og:description"\s+content=")[^"]*(")/s,
       `$1${escapeAttr(route.description)}$2`,
     );
+  const withRobots = route.robots
+    ? html.replace('</head>', `<meta name="robots" content="${escapeAttr(route.robots)}" /></head>`)
+    : html;
   const target = join(dist, route.path, 'index.html');
   await mkdir(dirname(target), { recursive: true });
-  await writeFile(target, html);
+  await writeFile(target, withRobots);
   console.log(`prerendered head: /${route.path}/`);
 }

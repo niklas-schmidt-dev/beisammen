@@ -19,12 +19,40 @@ function withVaryAccept(response: Response): Response {
   return varied;
 }
 
+// App association files for Universal Links (iOS) and App Links (Android).
+// The AASA file has no extension, so the asset layer would guess its type
+// and the SPA fallback would answer a missing file with index.html — both
+// break verification. Serve them explicitly as JSON or as a real 404.
+const APP_ASSOCIATION_PATHS = new Set([
+  '/.well-known/apple-app-site-association',
+  '/.well-known/assetlinks.json',
+]);
+
+async function serveAppAssociation(request: Request, env: Env): Promise<Response> {
+  const response = await env.ASSETS.fetch(request);
+  const type = response.headers.get('content-type') ?? '';
+  if (!response.ok || type.includes('text/html')) {
+    return new Response('Not found', { status: 404 });
+  }
+  return new Response(response.body, {
+    status: 200,
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.hostname === 'www.beisammen.app') {
       url.hostname = 'beisammen.app';
       return Response.redirect(url.toString(), 301);
+    }
+
+    if (APP_ASSOCIATION_PATHS.has(url.pathname)) {
+      return serveAppAssociation(request, env);
     }
 
     // Markdown for agents: requests that ask for text/markdown get the

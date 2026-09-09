@@ -181,6 +181,7 @@
     "i": 1,
     "t": "Text"
   },
+  "270a0dc9b1b8d598": "Could not read clipboard.",
   "27dad249fed6c222": "More",
   "28acc3d94b2ca73e": "Close input",
   "2b0d350fc56ba187": "Delete Circle",
@@ -229,6 +230,7 @@
   },
   "34e479e1e916fae4": "Join Circle",
   "34ee832db0757026": "Delete account",
+  "353d28df4ccf0ed8": "Manage, join, or create a new Circle",
   "35a43a3525780782": "Create invitation link",
   "35bf3eb589947717": {
     "c": {
@@ -272,6 +274,7 @@
   "376fdc6e590c6d48": "Type",
   "3840055deac2caea": "Open settings",
   "3907dcd3c24571f9": "Preparing connection...",
+  "39c2e66afcc7fed8": "The clipboard is empty.",
   "39f0df7af6035f1a": "More memories",
   "3b1c42fe5aa47b28": "Push notifications disabled.",
   "3b4028f81220da85": "The Circle Owner must enable Cloud billing before members can upload media items.",
@@ -468,14 +471,21 @@
       "t": "Text"
     }
   ],
-  "5611e8755552131e": {
-    "c": "Photos and videos remain private in drafts until you're ready to publish.",
-    "i": 1,
-    "t": "Text"
-  },
   "561e12bca1e7abf4": "Select push notifications",
   "57180256b5f517fd": "Remove media?",
   "577b45c2e72be41e": "Delete post?",
+  "58aa2561e195aa35": [
+    {
+      "c": "Paste an invitation",
+      "i": 1,
+      "t": "Text"
+    },
+    {
+      "c": "The link looks like this: https://beisammen.app/connect?invite=…",
+      "i": 2,
+      "t": "Text"
+    }
+  ],
   "58d2cd2c6a9fa82b": "Your upload allowance for this month has been used up. Change your plan or wait until next month.",
   "592fb7c3787edf52": {
     "c": [
@@ -542,7 +552,6 @@
       "t": "Text"
     }
   ],
-  "61965ef57c6cc116": "Manage, change pictures, create a new Circle",
   "61cc3062ac48cb4b": {
     "c": "The interactive map is available in the app. It shows all memories with location data.",
     "i": 1,
@@ -593,18 +602,6 @@
   },
   "72435c6516c0fc27": "Email address and password are required.",
   "725e90b456e5bc36": "The Circle Owner's upload allowance for this month has been used up.",
-  "72be0576c0aae4bb": [
-    {
-      "c": "Private draft",
-      "i": 1,
-      "t": "Text"
-    },
-    {
-      "c": "Only you can see this draft until you publish it.",
-      "i": 2,
-      "t": "Text"
-    }
-  ],
   "736cca53e9c340d6": {
     "c": "Start by naming the people.",
     "i": 1,
@@ -744,18 +741,6 @@
     "i": 1,
     "t": "Text"
   },
-  "844e3edd13caf5c3": {
-    "c": [
-      "Connected to ",
-      {
-        "i": 2,
-        "k": "_gt_value_2",
-        "v": "v"
-      }
-    ],
-    "i": 1,
-    "t": "Text"
-  },
   "85183ff810c06381": {
     "c": {
       "d": {
@@ -814,6 +799,7 @@
     }
   ],
   "873f01d859e9d585": "Select Circle",
+  "877d5e1a267f49d9": "Paste from clipboard",
   "87ac5c823f33129a": "No active plan",
   "87b2efbd27d6fe33": "Circle {name}",
   "884a051c1332c984": {
@@ -847,19 +833,6 @@
     "i": 1,
     "t": "Text"
   },
-  "8fb305a8f30362fe": "Add more photos or videos",
-  "902599521465f33e": [
-    {
-      "c": "Paste invitation",
-      "i": 1,
-      "t": "Text"
-    },
-    {
-      "c": "The link looks like this: beisammen://connect?invite=…",
-      "i": 2,
-      "t": "Text"
-    }
-  ],
   "90cb0b881a2a8149": "{name} will become the Owner. You'll retain access as an Admin.",
   "90e603698a180b14": "Sign in to open your Circle invitation.",
   "9123c51354900e89": "Family, vacation, partner",
@@ -893,9 +866,7 @@
     "i": 1,
     "t": "Text"
   },
-  "96ad945bae9c7292": "Write something about it if you like",
   "96b07b80474d1417": "Load more",
-  "96b477ca32caf9fd": "Select photos or videos",
   "96c26c2c430ff28f": "Your Beisammen recovery code. Use this code to regain access to your encrypted photos on a new device. Keep this file safe and don't share it with anyone.",
   "96e7d91a9b40a607": "Write a reply…",
   "973ca9a86c3cdaec": "Open photo in full screen",
@@ -929,7 +900,6 @@
   "9c2d2a1d59d74d67": "Open {displayText} post",
   "9ca1900419b0c005": "Photos",
   "9ca4094fb14fed77": "When someone reacts to shared memories with an emoji.",
-  "9cf1570386333a6e": "Preparing media items...",
   "9cfb7a9dc7c5351c": {
     "c": "No media items",
     "i": 1,
@@ -979,6 +949,18 @@
     "i": 1,
     "t": "Text"
   },
+  "a4fe10b304f41c31": [
+    {
+      "c": "Paste an invitation",
+      "i": 1,
+      "t": "Text"
+    },
+    {
+      "c": "Paste the invitation link or code you received. You can also paste the entire message—we’ll extract the link.",
+      "i": 2,
+      "t": "Text"
+    }
+  ],
   "a5fbc7f165eb5977": "Could not remove comment.",
   "a6d2d6b25d4b2153": "Sign in",
   "a73fb7a8c649654e": "Instance backend address",
@@ -1091,6 +1073,7 @@
   "cc885d77a509a58d": "We couldn't check whether you can create a Circle right now. Please try again shortly.",
   "cd930a3b354d3d62": "Reset failed. Please try again.",
   "ceec6c8ca514eaae": "Remove Circle picture?",
+  "cf5a0d8099ba2979": "Continue",
   "d033b73f17ce8b6a": "Confirmation incomplete. Please try again.",
   "d04d55a206fa8ef1": "{used} of {total} Circles used",
   "d04f67bd201631a3": {
@@ -1102,6 +1085,18 @@
   "d131cae25eac3806": "When someone shares photos or videos in one of your Circles.",
   "d28474a413c7d7a1": "Your Circles",
   "d3b5d8f368e6cbd0": "Terms of Use (EULA)",
+  "d3c2e98ff41acf96": [
+    {
+      "c": "Join with an invitation",
+      "i": 1,
+      "t": "Text"
+    },
+    {
+      "c": "Paste an invitation link or code.",
+      "i": 2,
+      "t": "Text"
+    }
+  ],
   "d4434205b94f39cb": "Open {dateLabel} from {circleName}",
   "d44f8cd8cefaaa1e": "Confirming purchase …",
   "d51ab707b900998d": {
@@ -1156,11 +1151,6 @@
     "t": "Text"
   },
   "dec4c139b10add43": "Invitation not found",
-  "df31260bd3c786c1": {
-    "c": "Your draft is being prepared. You’ll be able to add text shortly.",
-    "i": 1,
-    "t": "Text"
-  },
   "dfa6c7c73ad88da7": "The Circle could not be created.",
   "dffa132524f93de4": "The code is invalid. Please check your entry.",
   "e12fc997de31aff8": "Please enter exactly one emoji.",

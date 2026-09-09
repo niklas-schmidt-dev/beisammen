@@ -1,6 +1,7 @@
 /**
- * Accepts a raw invite token, a `beisammen://connect?invite=...` link, or a
- * pasted share message containing such a link.
+ * Accepts a raw invite token, an invite link (`https://beisammen.app/connect?invite=...`
+ * or the legacy `beisammen://connect?invite=...`), or a pasted share message
+ * containing such a link.
  */
 export function parseInviteToken(raw: string): string | null {
   const trimmed = raw.trim();
@@ -20,7 +21,7 @@ export function parseInviteToken(raw: string): string | null {
   }
 
   if (/\s/.test(trimmed)) {
-    const linkMatch = trimmed.match(/beisammen:\/\/\S+/);
+    const linkMatch = trimmed.match(/(?:beisammen|https?):\/\/\S+/);
     return linkMatch ? parseInviteToken(linkMatch[0]) : null;
   }
 

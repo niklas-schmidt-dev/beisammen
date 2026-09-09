@@ -23,6 +23,11 @@ const publicEnv = {
 } as const;
 
 const scheme = publicEnv.EXPO_PUBLIC_APP_SCHEME;
+// Invite links are https://beisammen.app/connect?… so chat apps render them as
+// links. Both platforms claim that path (Universal Links / App Links) and hand
+// it to the same `connect` route the custom scheme uses. The matching
+// association files live in apps/website/public/.well-known/.
+const universalLinkHost = 'beisammen.app';
 const easProjectId = publicEnv.EXPO_PUBLIC_EAS_PROJECT_ID.trim();
 const mapsPluginConfig = {
   ...(process.env.GOOGLE_MAPS_ANDROID_API_KEY
@@ -36,7 +41,7 @@ const mapsPluginConfig = {
 const config: ExpoConfig = {
   name: 'beisammen',
   slug: 'beisammen-mobile',
-  version: '1.0.1',
+  version: '1.0.2',
   // Keep production OTA updates scoped to the native app version. Expo
   // recommends this stable policy for EAS Update; fingerprint runtimes are
   // still experimental and can differ between local and clean EAS installs.
@@ -55,6 +60,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'app.beisammen.app',
+    associatedDomains: [`applinks:${universalLinkHost}`],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       CFBundleDevelopmentRegion: 'de',
@@ -68,6 +74,17 @@ const config: ExpoConfig = {
   android: {
     package: 'app.beisammen.app',
     googleServicesFile: './google-services.json',
+    intentFilters: [
+      {
+        action: 'VIEW',
+        autoVerify: true,
+        data: [
+          { scheme: 'https', host: universalLinkHost, pathPrefix: '/connect' },
+          { scheme: 'https', host: universalLinkHost, pathPrefix: '/en/connect' },
+        ],
+        category: ['BROWSABLE', 'DEFAULT'],
+      },
+    ],
     adaptiveIcon: {
       backgroundColor: '#F7F4EE',
       foregroundImage: './assets/images/android-icon-foreground.png',

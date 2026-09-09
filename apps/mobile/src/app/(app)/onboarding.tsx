@@ -468,7 +468,7 @@ export default function OnboardingScreen() {
                 <T>
                   <Text style={[styles.cardTitle, { color: theme.text }]}>Einladung einfügen</Text>
                   <Text style={[styles.body, { color: theme.textSecondary }]}>
-                    Der Link sieht so aus: beisammen://connect?invite=…
+                    Der Link sieht so aus: https://beisammen.app/connect?invite=…
                   </Text>
                 </T>
                 <TextInput

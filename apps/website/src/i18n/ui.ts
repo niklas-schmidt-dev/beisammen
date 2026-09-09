@@ -76,6 +76,19 @@ type Dictionary = {
     privacy: string;
     year: string;
   };
+  connect: {
+    metaTitle: string;
+    metaDescription: string;
+    eyebrow: string;
+    title: string;
+    lede: string;
+    invalidTitle: string;
+    invalidLede: string;
+    openApp: string;
+    installTitle: string;
+    installBody: string;
+    afterInstall: string;
+  };
 };
 
 export const dict: Record<Locale, Dictionary> = {
@@ -213,6 +226,19 @@ export const dict: Record<Locale, Dictionary> = {
       privacy: 'Privacy',
       year: 'MMXXVI · beisammen',
     },
+    connect: {
+      metaTitle: 'Open in beisammen',
+      metaDescription: 'Opens an invitation or instance link in the beisammen app.',
+      eyebrow: 'Invitation',
+      title: 'Your invitation is ready.',
+      lede: 'Open this link in the beisammen app to join the circle. If the app is installed, it opens automatically.',
+      invalidTitle: 'This link is incomplete.',
+      invalidLede: 'It contains neither an invitation nor an instance. Ask the person who invited you to share the link again.',
+      openApp: 'Open in the app',
+      installTitle: 'Don’t have the app yet?',
+      installBody: 'Install beisammen, then come back and open this link again — the invitation will be picked up.',
+      afterInstall: 'Invite links are single-use and only work in the app.',
+    },
   },
   de: {
     htmlLang: 'de',
@@ -348,6 +374,19 @@ export const dict: Record<Locale, Dictionary> = {
       privacy: 'Datenschutz',
       year: 'MMXXVI · beisammen',
     },
+    connect: {
+      metaTitle: 'In beisammen öffnen',
+      metaDescription: 'Öffnet einen Einladungs- oder Instanz-Link in der beisammen-App.',
+      eyebrow: 'Einladung',
+      title: 'Deine Einladung ist bereit.',
+      lede: 'Öffne diesen Link in der beisammen-App, um dem Circle beizutreten. Ist die App installiert, öffnet sie sich automatisch.',
+      invalidTitle: 'Dieser Link ist unvollständig.',
+      invalidLede: 'Er enthält weder eine Einladung noch eine Instanz. Bitte die Person, die dich eingeladen hat, den Link erneut zu teilen.',
+      openApp: 'In der App öffnen',
+      installTitle: 'Noch keine App?',
+      installBody: 'Installiere beisammen, komm dann hierher zurück und öffne den Link noch einmal – die Einladung wird übernommen.',
+      afterInstall: 'Einladungslinks sind einmalig nutzbar und funktionieren nur in der App.',
+    },
   },
 };
 
@@ -356,7 +395,10 @@ export const appStoreUrl = 'https://apps.apple.com/app/id6762514050';
 export const playStoreUrl = 'https://play.google.com/store/apps/details?id=app.beisammen.app';
 export const licenseUrl = `${repoUrl}/blob/main/docs/licensing.md`;
 
-export function localePath(locale: Locale, path: '' | 'privacy' | 'delete-account'): string {
+export function localePath(
+  locale: Locale,
+  path: '' | 'privacy' | 'delete-account' | 'connect',
+): string {
   const prefix = locale === 'en' ? '/en' : '';
   return path === '' ? `${prefix}/` : `${prefix}/${path}/`;
 }

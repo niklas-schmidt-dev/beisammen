@@ -86,7 +86,7 @@ export default function SettingsScreen() {
             <SettingsNavRow
               icon="people-outline"
               title={m(settingsCopy.yourCirclesLabel)}
-              subtitle={gt('Verwalten, Bilder ändern, neuen Circle erstellen')}
+              subtitle={gt('Verwalten, beitreten, neuen Circle erstellen')}
               hasSeparator
               onPress={() => router.push('/settings/circles' as never)}
             />

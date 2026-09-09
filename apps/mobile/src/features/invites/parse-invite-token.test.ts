@@ -14,10 +14,23 @@ describe('parseInviteToken', () => {
     ).toBe('tok-1');
   });
 
+  test('extracts the token from an https invite link', () => {
+    expect(
+      parseInviteToken(
+        'https://beisammen.app/connect?instance=https%3A%2F%2Fbackend.beisammen.app&invite=b02067d6',
+      ),
+    ).toBe('b02067d6');
+  });
+
   test('extracts the link from a pasted share message', () => {
     expect(
       parseInviteToken('Komm in meinen Circle "Familie": beisammen://connect?invite=xyz\n\nBis bald!'),
     ).toBe('xyz');
+    expect(
+      parseInviteToken(
+        'Komm in meinen Circle "Familie": https://beisammen.app/connect?instance=https%3A%2F%2Fbackend.beisammen.app&invite=tok-9\n\nDieser Link ist einmalig nutzbar.',
+      ),
+    ).toBe('tok-9');
   });
 
   test('rejects unrelated URLs and empty input', () => {

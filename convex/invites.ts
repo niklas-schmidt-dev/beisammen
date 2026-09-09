@@ -4,35 +4,14 @@ import type { Doc } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
 import { adjustCircleStats } from './circleStats';
+import { readBaseUrl } from './lib/httpHelpers';
+import { buildInviteLink } from './lib/inviteLinks';
 import { isManageRole, requireCircleMembership, requireViewer } from './lib/viewer';
 
 export const CIRCLE_INVITE_LIST_LIMIT = 100;
 type InviteMode = 'email' | 'open';
 
 const inviteModeValidator = v.union(v.literal('email'), v.literal('open'));
-
-function trimTrailingSlashes(value: string): string {
-  return value.replace(/\/+$/, '');
-}
-
-function readBaseUrl(): string {
-  const configured =
-    process.env.INSTANCE_BASE_URL ??
-    process.env.CONVEX_SITE_URL ??
-    process.env.CONVEX_SITE_ORIGIN ??
-    'http://127.0.0.1:3211';
-
-  return trimTrailingSlashes(configured);
-}
-
-function buildInviteLink(token: string): string {
-  const params = new URLSearchParams({
-    instance: readBaseUrl(),
-    invite: token,
-  });
-
-  return `beisammen://connect?${params.toString()}`;
-}
 
 function buildInvitedByLabel(user: Doc<'users'> | null) {
   if (!user) {
@@ -161,7 +140,7 @@ export const create = mutation({
     return {
       inviteId,
       token,
-      inviteLink: buildInviteLink(token),
+      inviteLink: buildInviteLink({ token, instanceBaseUrl: readBaseUrl() }),
     };
   },
 });

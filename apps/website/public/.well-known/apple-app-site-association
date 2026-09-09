@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["9537RR5SZS.app.beisammen.app"],
+        "components": [
+          { "/": "/connect", "comment": "Invite / instance hand-off" },
+          { "/": "/connect/", "comment": "Invite / instance hand-off (trailing slash)" },
+          { "/": "/en/connect", "comment": "Invite / instance hand-off (English path)" },
+          { "/": "/en/connect/", "comment": "Invite / instance hand-off (English path, trailing slash)" }
+        ]
+      }
+    ]
+  }
+}
