@@ -3,7 +3,7 @@ import { useSignIn, useSignUp, useSSO } from '@clerk/expo';
 import * as AuthSession from 'expo-auth-session';
 import { Redirect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { T, Var, msg, useGT, useMessages } from 'gt-react-native';
+import { T, Var, useGT, useMessages } from 'gt-react-native';
 import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -41,8 +41,6 @@ const logger = createLogger('auth.sign-in');
 
 type AuthMode = 'sign-in' | 'sign-up' | 'verify-email' | 'verify-device';
 
-const signInFailedMessage = msg('Anmeldung fehlgeschlagen.');
-
 /**
  * Native SSO callback. Clerk rejects the sign-in ("Redirect url mismatch")
  * unless this exact URL is allowlisted under Native Applications for the
@@ -53,26 +51,112 @@ const ssoRedirectUrl = AuthSession.makeRedirectUri({
   path: 'sso-callback',
 });
 
-function authErrorMessage(error: unknown): string {
+type Translate = ReturnType<typeof useGT>;
+
+interface ClerkApiError {
+  code?: string;
+  longMessage?: string;
+  message?: string;
+  meta?: { paramName?: string };
+}
+
+function firstClerkError(error: unknown): ClerkApiError | null {
   if (error && typeof error === 'object' && 'errors' in error) {
-    const clerkErrors = (error as { errors?: Array<{ longMessage?: string; message?: string }> })
-      .errors;
-    const first = clerkErrors?.[0];
+    const clerkErrors = (error as { errors?: ClerkApiError[] }).errors;
+    return clerkErrors?.[0] ?? null;
+  }
 
-    if (first?.longMessage || first?.message) {
-      return first.longMessage ?? first.message ?? signInFailedMessage;
+  return null;
+}
+
+/**
+ * Clerk only returns English API messages, so map the codes we can hit from
+ * this screen to German copy. Unknown codes fall back to Clerk's message so a
+ * new error is at least visible instead of silently generic.
+ */
+function translateClerkError(clerkError: ClerkApiError, gt: Translate): string | null {
+  const rawMessage = clerkError.longMessage ?? clerkError.message ?? '';
+
+  switch (clerkError.code) {
+    case 'form_identifier_not_found':
+      return gt('Zu dieser E-Mail-Adresse wurde kein Konto gefunden.');
+    case 'form_identifier_exists':
+      return gt('Für diese E-Mail-Adresse gibt es bereits ein Konto. Bitte melde dich an.');
+    case 'form_password_incorrect':
+      return gt('Das Passwort ist falsch.');
+    case 'form_password_length_too_short': {
+      const minLength = /(\d+)/.exec(rawMessage)?.[1];
+      return minLength
+        ? gt('Das Passwort muss mindestens {count} Zeichen lang sein.', { count: minLength })
+        : gt('Das Passwort ist zu kurz.');
+    }
+    case 'form_password_size_in_bytes_exceeded':
+      return gt('Das Passwort ist zu lang.');
+    case 'form_password_pwned':
+      return gt('Dieses Passwort ist aus einem Datenleck bekannt. Bitte wähle ein anderes.');
+    case 'form_password_not_strong_enough':
+    case 'form_password_validation_failed':
+      return gt('Das Passwort ist zu schwach. Bitte wähle ein längeres Passwort.');
+    case 'form_param_format_invalid':
+      return clerkError.meta?.paramName === 'email_address' || /email/i.test(rawMessage)
+        ? gt('Bitte gib eine gültige E-Mail-Adresse ein.')
+        : gt('Bitte prüfe deine Eingaben.');
+    case 'form_param_nil':
+      return gt('Bitte fülle alle Felder aus.');
+    case 'form_code_incorrect':
+      return gt('Der Code ist falsch.');
+    case 'verification_expired':
+      return gt('Der Code ist abgelaufen. Fordere einen neuen an.');
+    case 'verification_failed':
+      return gt('Die Bestätigung ist fehlgeschlagen. Fordere einen neuen Code an.');
+    case 'too_many_requests':
+      return gt('Zu viele Versuche. Bitte warte kurz und versuche es erneut.');
+    case 'user_locked':
+      return gt('Dein Konto ist vorübergehend gesperrt. Bitte versuche es später erneut.');
+    case 'session_exists':
+    case 'identifier_already_signed_in':
+      return gt('Du bist bereits angemeldet.');
+    case 'strategy_for_user_invalid':
+      return gt('Für dieses Konto ist keine Passwort-Anmeldung möglich. Nutze Google oder Apple.');
+    case 'not_allowed_access':
+    case 'sign_up_restricted':
+      return gt('Die Registrierung ist mit dieser E-Mail-Adresse nicht möglich.');
+    default:
+      return null;
+  }
+}
+
+function authErrorMessage(error: unknown, gt: Translate): string {
+  const clerkError = firstClerkError(error);
+
+  if (clerkError) {
+    const translated = translateClerkError(clerkError, gt);
+
+    if (translated) {
+      return translated;
+    }
+
+    if (clerkError.longMessage || clerkError.message) {
+      return clerkError.longMessage ?? clerkError.message ?? gt('Anmeldung fehlgeschlagen.');
     }
   }
 
-  if (error && typeof error === 'object' && 'message' in error) {
-    const message = (error as { message?: unknown }).message;
+  const message =
+    error instanceof Error
+      ? error.message
+      : error && typeof error === 'object' && 'message' in error
+        ? (error as { message?: unknown }).message
+        : null;
 
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return message;
+  if (typeof message === 'string' && message.trim().length > 0) {
+    if (/network request failed|failed to fetch/i.test(message)) {
+      return gt('Keine Verbindung. Prüfe dein Internet und versuche es erneut.');
     }
+
+    return message;
   }
 
-  return error instanceof Error ? error.message : signInFailedMessage;
+  return gt('Anmeldung fehlgeschlagen.');
 }
 
 export default function SignInScreen() {
@@ -196,7 +280,7 @@ export default function SignInScreen() {
         });
 
         if (error) {
-          setAuthError(authErrorMessage(error));
+          setAuthError(authErrorMessage(error, gt));
           return;
         }
 
@@ -204,7 +288,7 @@ export default function SignInScreen() {
           const finalized = await signIn.finalize();
 
           if (finalized.error) {
-            setAuthError(authErrorMessage(finalized.error));
+            setAuthError(authErrorMessage(finalized.error, gt));
           } else {
             // Cover the auth→app swap with the brand iris.
             wipe();
@@ -217,7 +301,7 @@ export default function SignInScreen() {
           const sent = await signIn.mfa.sendEmailCode();
 
           if (sent.error) {
-            setAuthError(authErrorMessage(sent.error));
+            setAuthError(authErrorMessage(sent.error, gt));
             return;
           }
 
@@ -238,14 +322,14 @@ export default function SignInScreen() {
       });
 
       if (created.error) {
-        setAuthError(authErrorMessage(created.error));
+        setAuthError(authErrorMessage(created.error, gt));
         return;
       }
 
       const sent = await signUp.verifications.sendEmailCode();
 
       if (sent.error) {
-        setAuthError(authErrorMessage(sent.error));
+        setAuthError(authErrorMessage(sent.error, gt));
         return;
       }
 
@@ -253,7 +337,7 @@ export default function SignInScreen() {
       setAuthMode('verify-email');
     } catch (error) {
       logger.warn('Password auth failed', { mode: authMode, error });
-      setAuthError(authErrorMessage(error));
+      setAuthError(authErrorMessage(error, gt));
     } finally {
       setIsBusy(false);
     }
@@ -280,7 +364,7 @@ export default function SignInScreen() {
       });
 
       if (verified.error) {
-        setAuthError(authErrorMessage(verified.error));
+        setAuthError(authErrorMessage(verified.error, gt));
         return;
       }
 
@@ -288,7 +372,7 @@ export default function SignInScreen() {
         const finalized = await signUp.finalize();
 
         if (finalized.error) {
-          setAuthError(authErrorMessage(finalized.error));
+          setAuthError(authErrorMessage(finalized.error, gt));
         } else {
           wipe();
         }
@@ -298,7 +382,7 @@ export default function SignInScreen() {
       }
     } catch (error) {
       logger.warn('Email verification failed', { error });
-      setAuthError(authErrorMessage(error));
+      setAuthError(authErrorMessage(error, gt));
     } finally {
       setIsBusy(false);
     }
@@ -324,7 +408,7 @@ export default function SignInScreen() {
       const verified = await signIn.mfa.verifyEmailCode({ code: normalizedCode });
 
       if (verified.error) {
-        setAuthError(authErrorMessage(verified.error));
+        setAuthError(authErrorMessage(verified.error, gt));
         return;
       }
 
@@ -332,7 +416,7 @@ export default function SignInScreen() {
         const finalized = await signIn.finalize();
 
         if (finalized.error) {
-          setAuthError(authErrorMessage(finalized.error));
+          setAuthError(authErrorMessage(finalized.error, gt));
         } else {
           wipe();
         }
@@ -342,7 +426,7 @@ export default function SignInScreen() {
       }
     } catch (error) {
       logger.warn('Device verification failed', { error });
-      setAuthError(authErrorMessage(error));
+      setAuthError(authErrorMessage(error, gt));
     } finally {
       setIsBusy(false);
     }
@@ -361,7 +445,7 @@ export default function SignInScreen() {
       const sent = await signIn.mfa.sendEmailCode();
 
       if (sent.error) {
-        setAuthError(authErrorMessage(sent.error));
+        setAuthError(authErrorMessage(sent.error, gt));
         return;
       }
 
@@ -369,7 +453,7 @@ export default function SignInScreen() {
       setVerifyNotice(gt('Wir haben dir einen neuen Code geschickt.'));
     } catch (error) {
       logger.warn('Resending device code failed', { error });
-      setAuthError(authErrorMessage(error));
+      setAuthError(authErrorMessage(error, gt));
     } finally {
       setIsBusy(false);
     }
@@ -401,7 +485,7 @@ export default function SignInScreen() {
       }
     } catch (error) {
       logger.warn('SSO sign-in failed', { strategy, error });
-      setAuthError(authErrorMessage(error));
+      setAuthError(authErrorMessage(error, gt));
     } finally {
       setIsBusy(false);
     }
@@ -422,10 +506,7 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
@@ -827,6 +908,7 @@ function PrimaryAction({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       disabled={disabled}
       pressedScale={0.98}

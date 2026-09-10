@@ -1,0 +1,11 @@
+{
+  "caseId": "flows/sign-in.mob",
+  "caseName": "",
+  "deviceId": "00008120-000639440C13C01E",
+  "deviceName": "iPhone von Niklas",
+  "startedAt": "2026-09-09T19:08:27.806056+02:00",
+  "finishedAt": "2026-09-09T19:08:27.806056+02:00",
+  "passed": false,
+  "stepResults": null,
+  "error": "line 13: unknown action \"repeat\""
+}

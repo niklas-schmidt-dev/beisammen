@@ -1,0 +1,43 @@
+{
+  "caseId": "_probe-buy-plan.mob",
+  "caseName": "open draft sheet, go to billing via \"Tarif wählen\", buy the Test Store plan",
+  "deviceId": "00008120-000639440C13C01E",
+  "deviceName": "iPhone von Niklas",
+  "startedAt": "2026-09-10T11:58:00.211617+02:00",
+  "finishedAt": "2026-09-10T11:58:07.223505+02:00",
+  "passed": true,
+  "stepResults": [
+    {
+      "index": 0,
+      "lineNumber": 4,
+      "lineText": "tap \"Neuen Beitrag erstellen\"",
+      "passed": true,
+      "startedAtMs": 1789034280218,
+      "durationMs": 658
+    },
+    {
+      "index": 1,
+      "lineNumber": 5,
+      "lineText": "wait_for ~\"Beitragstext\" timeout:20000",
+      "passed": true,
+      "startedAtMs": 1789034280904,
+      "durationMs": 329
+    },
+    {
+      "index": 2,
+      "lineNumber": 6,
+      "lineText": "wait_stable timeout:3000",
+      "passed": true,
+      "startedAtMs": 1789034281234,
+      "durationMs": 692
+    },
+    {
+      "index": 3,
+      "lineNumber": 7,
+      "lineText": "if_exists \"Tarif wählen\" {",
+      "passed": true,
+      "startedAtMs": 1789034281927,
+      "durationMs": 5295
+    }
+  ]
+}

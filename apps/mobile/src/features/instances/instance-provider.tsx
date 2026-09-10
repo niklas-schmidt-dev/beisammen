@@ -19,6 +19,7 @@ import {
   saveStoredInviteToken,
 } from '@/features/auth/session-store';
 import { defaultInstanceConfig } from '@/features/instances/catalog';
+import { isDefaultCloudInstance, setObserveInstance } from '@/features/observe/runtime';
 import { recordClientDiagnostic } from '@/features/diagnostics/buffer';
 import { clearUploadRecoveryForInstance } from '@/features/media/upload-recovery-runtime';
 import { unregisterCurrentPushDevice } from '@/features/notifications/registration-runtime';
@@ -58,6 +59,10 @@ export function InstanceProvider({ children }: PropsWithChildren) {
     async function loadActiveInstance() {
       try {
         const storedInstance = await loadStoredInstanceConfig();
+
+        if (!isCancelled) {
+          void setObserveInstance(isDefaultCloudInstance(storedInstance ?? defaultInstanceConfig, defaultInstanceConfig));
+        }
 
         if (!isCancelled && storedInstance) {
           setInstanceState(storedInstance);
@@ -157,6 +162,11 @@ export function InstanceProvider({ children }: PropsWithChildren) {
   ) => {
     const nextInstanceUrl = nextInstance.instance.baseUrl;
     const normalizedInviteToken = options?.pendingInviteToken?.trim() ?? '';
+
+    // Disable before persisting/switching instances, including pending cleanup.
+    if (!isDefaultCloudInstance(nextInstance, defaultInstanceConfig)) {
+      void setObserveInstance(false);
+    }
 
     await saveStoredInstanceConfig(nextInstance);
 

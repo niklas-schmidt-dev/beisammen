@@ -1,0 +1,14 @@
+# System photo picker (PHPicker): select the two newest plain photos (skip
+# Live Photos and videos so the upload stays quick) and confirm. The first
+# run on a device also shows the photo-library permission prompt
+# ("Vollen Zugriff erlauben"); `# Alerts: accept` in the caller handles it.
+wait_for "Fertig" timeout:20000
+tap /"^Foto, "/ type:image [0]
+tap /"^Foto, "/ type:image [1]
+wait_stable timeout:2000
+tap "Fertig"
+wait_stable timeout:10000
+if_exists "Ort ergänzen?" {
+    tap "Nicht jetzt"
+    wait_stable timeout:3000
+}

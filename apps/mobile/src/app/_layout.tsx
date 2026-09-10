@@ -1,7 +1,7 @@
 import 'expo-dev-client';
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Observe, ObserveRoot } from 'expo-observe';
+import { ObserveRoot } from 'expo-observe';
 import { Stack, usePathname, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
@@ -23,34 +23,14 @@ import { createLogger } from '@/lib/logger';
 
 import gtConfig from '../../gt.config.json';
 
+export { AppErrorScreen as ErrorBoundary } from '@/features/observe/error-screen';
+
 // Initialize General Translation once, at the module level, before rendering.
 initializeGT({
   ...gtConfig,
   loadTranslations,
   projectId: process.env.EXPO_PUBLIC_GT_PROJECT_ID,
   devApiKey: process.env.EXPO_PUBLIC_GT_DEV_API_KEY,
-});
-
-// EAS Observe: track per-route navigation metrics via the Expo Router
-// integration. Must run at module scope, before any screen mounts. Debug
-// builds do not dispatch metrics unless `dispatchInDebug: true` is added here.
-Observe.configure({
-  integrations: {
-    'expo-router': {
-      // Keep private circle, share, media, invite, and instance identifiers out
-      // of performance telemetry. Filtering any matched parameter also hides
-      // the resolved URL while preserving the non-sensitive route pattern.
-      filteredParams: [
-        'assetId',
-        'circleId',
-        'filterKey',
-        'instance',
-        'invite',
-        'memoryId',
-        'shareId',
-      ],
-    },
-  },
 });
 
 // Keep the native splash up until the animated overlay has committed its

@@ -1,0 +1,912 @@
+{
+  "caseId": "full-flow.mob",
+  "caseName": "beisammen dev - full end-to-end flow on a real iPhone",
+  "deviceId": "00008120-000639440C13C01E",
+  "deviceName": "iPhone von Niklas",
+  "startedAt": "2026-09-09T21:57:08.419707+02:00",
+  "finishedAt": "2026-09-09T21:59:54.114371+02:00",
+  "passed": false,
+  "stepResults": [
+    {
+      "index": 0,
+      "lineNumber": 29,
+      "lineText": "eval \"vars.circle_name = 'E2E ' + new Date().toISOString().slice(0, 16).replace('T', ' ')\"",
+      "passed": true,
+      "startedAtMs": 1788983828420,
+      "durationMs": 0
+    },
+    {
+      "index": 1,
+      "lineNumber": 30,
+      "lineText": "eval \"vars.circle_description = 'Automatischer MobAI-Testlauf'\"",
+      "passed": true,
+      "startedAtMs": 1788983828420,
+      "durationMs": 0
+    },
+    {
+      "index": 2,
+      "lineNumber": 35,
+      "lineText": "kill_app \"${app}\"",
+      "passed": true,
+      "startedAtMs": 1788983828420,
+      "durationMs": 974
+    },
+    {
+      "index": 3,
+      "lineNumber": 36,
+      "lineText": "delay 2000",
+      "passed": true,
+      "startedAtMs": 1788983829395,
+      "durationMs": 2000
+    },
+    {
+      "index": 4,
+      "lineNumber": 37,
+      "lineText": "app \"${app}\"",
+      "passed": true,
+      "startedAtMs": 1788983831395,
+      "durationMs": 83
+    },
+    {
+      "index": 5,
+      "lineNumber": 38,
+      "lineText": "wait_stable timeout:10000",
+      "passed": true,
+      "startedAtMs": 1788983831734,
+      "durationMs": 1029
+    },
+    {
+      "index": 6,
+      "lineNumber": 40,
+      "lineText": "assert_exists type:button timeout:30000 on_fail:skip",
+      "passed": true,
+      "startedAtMs": 1788983832764,
+      "durationMs": 1395
+    },
+    {
+      "index": 7,
+      "lineNumber": 41,
+      "lineText": "if_exists type:button {",
+      "passed": true,
+      "startedAtMs": 1788983834159,
+      "durationMs": 206
+    },
+    {
+      "index": 8,
+      "lineNumber": 50,
+      "lineText": "if_exists \"Ich habe den Code gesichert\" {",
+      "passed": true,
+      "startedAtMs": 1788983834366,
+      "durationMs": 202
+    },
+    {
+      "index": 9,
+      "lineNumber": 56,
+      "lineText": "if_exists \"E-Mail-Adresse\" {",
+      "passed": true,
+      "startedAtMs": 1788983834570,
+      "durationMs": 158
+    },
+    {
+      "index": 10,
+      "lineNumber": 74,
+      "lineText": "checkpoint \"owner-signed-in\"",
+      "passed": true,
+      "startedAtMs": 1788983834728,
+      "durationMs": 0
+    },
+    {
+      "index": 11,
+      "lineNumber": 77,
+      "lineText": "if_exists ~\"Circle E2E\" {",
+      "passed": true,
+      "startedAtMs": 1788983834728,
+      "durationMs": 20431
+    },
+    {
+      "index": 12,
+      "lineNumber": 84,
+      "lineText": "wait_for \"Neuen Circle erstellen\" timeout:20000",
+      "passed": true,
+      "startedAtMs": 1788983855159,
+      "durationMs": 334
+    },
+    {
+      "index": 13,
+      "lineNumber": 85,
+      "lineText": "assert_exists \"Schön, dass du da bist\"",
+      "passed": true,
+      "startedAtMs": 1788983855494,
+      "durationMs": 232
+    },
+    {
+      "index": 14,
+      "lineNumber": 86,
+      "lineText": "tap \"Mit Einladung beitreten\"",
+      "passed": true,
+      "startedAtMs": 1788983855727,
+      "durationMs": 722
+    },
+    {
+      "index": 15,
+      "lineNumber": 87,
+      "lineText": "wait_for \"Einladungslink oder Code\" timeout:10000",
+      "passed": true,
+      "startedAtMs": 1788983856488,
+      "durationMs": 262
+    },
+    {
+      "index": 16,
+      "lineNumber": 88,
+      "lineText": "assert_exists \"Circle beitreten\"",
+      "passed": true,
+      "startedAtMs": 1788983856751,
+      "durationMs": 195
+    },
+    {
+      "index": 17,
+      "lineNumber": 89,
+      "lineText": "tap \"Zurück\"",
+      "passed": true,
+      "startedAtMs": 1788983856947,
+      "durationMs": 727
+    },
+    {
+      "index": 18,
+      "lineNumber": 90,
+      "lineText": "wait_for \"Neuen Circle erstellen\" timeout:10000",
+      "passed": true,
+      "startedAtMs": 1788983857721,
+      "durationMs": 248
+    },
+    {
+      "index": 19,
+      "lineNumber": 91,
+      "lineText": "tap \"Neuen Circle erstellen\"",
+      "passed": true,
+      "startedAtMs": 1788983857970,
+      "durationMs": 715
+    },
+    {
+      "index": 20,
+      "lineNumber": 92,
+      "lineText": "wait_stable timeout:8000",
+      "passed": true,
+      "startedAtMs": 1788983858725,
+      "durationMs": 8019
+    },
+    {
+      "index": 21,
+      "lineNumber": 96,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788983866745,
+      "durationMs": 8241
+    },
+    {
+      "index": 22,
+      "lineNumber": 96,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788983874986,
+      "durationMs": 883
+    },
+    {
+      "index": 23,
+      "lineNumber": 96,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788983875870,
+      "durationMs": 321
+    },
+    {
+      "index": 24,
+      "lineNumber": 98,
+      "lineText": "wait_for \"Circle-Name\" timeout:20000",
+      "passed": true,
+      "startedAtMs": 1788983876192,
+      "durationMs": 224
+    },
+    {
+      "index": 25,
+      "lineNumber": 99,
+      "lineText": "assert_exists \"Dein erster Circle\"",
+      "passed": true,
+      "startedAtMs": 1788983876416,
+      "durationMs": 192
+    },
+    {
+      "index": 26,
+      "lineNumber": 100,
+      "lineText": "type \"Circle-Name\" → \"${circle_name}\"",
+      "passed": true,
+      "startedAtMs": 1788983876608,
+      "durationMs": 1438
+    },
+    {
+      "index": 27,
+      "lineNumber": 101,
+      "lineText": "type \"Beschreibung (optional)\" → \"${circle_description}\"",
+      "passed": true,
+      "startedAtMs": 1788983878094,
+      "durationMs": 1694
+    },
+    {
+      "index": 28,
+      "lineNumber": 102,
+      "lineText": "tap \"WILLKOMMEN\"",
+      "passed": true,
+      "startedAtMs": 1788983879843,
+      "durationMs": 783
+    },
+    {
+      "index": 29,
+      "lineNumber": 103,
+      "lineText": "wait_stable timeout:1500",
+      "passed": true,
+      "startedAtMs": 1788983880676,
+      "durationMs": 1724
+    },
+    {
+      "index": 30,
+      "lineNumber": 104,
+      "lineText": "tap \"Circle erstellen\" type:button",
+      "passed": true,
+      "startedAtMs": 1788983882401,
+      "durationMs": 865
+    },
+    {
+      "index": 31,
+      "lineNumber": 105,
+      "lineText": "wait_for \"Circle erstellt\" timeout:20000",
+      "passed": true,
+      "startedAtMs": 1788983883315,
+      "durationMs": 331
+    },
+    {
+      "index": 32,
+      "lineNumber": 106,
+      "lineText": "checkpoint \"circle-created\"",
+      "passed": true,
+      "startedAtMs": 1788983883646,
+      "durationMs": 0
+    },
+    {
+      "index": 33,
+      "lineNumber": 109,
+      "lineText": "scroll down to \"Invite-Link erstellen\" max_scrolls:8",
+      "passed": true,
+      "startedAtMs": 1788983883646,
+      "durationMs": 1684
+    },
+    {
+      "index": 34,
+      "lineNumber": 110,
+      "lineText": "tap ~\"Offen\" type:button",
+      "passed": true,
+      "startedAtMs": 1788983885350,
+      "durationMs": 825
+    },
+    {
+      "index": 35,
+      "lineNumber": 111,
+      "lineText": "wait_stable timeout:1500",
+      "passed": true,
+      "startedAtMs": 1788983886231,
+      "durationMs": 1709
+    },
+    {
+      "index": 36,
+      "lineNumber": 112,
+      "lineText": "scroll down to \"Invite-Link erstellen\" max_scrolls:4",
+      "passed": true,
+      "startedAtMs": 1788983887941,
+      "durationMs": 410
+    },
+    {
+      "index": 37,
+      "lineNumber": 113,
+      "lineText": "scroll down",
+      "passed": true,
+      "startedAtMs": 1788983888370,
+      "durationMs": 538
+    },
+    {
+      "index": 38,
+      "lineNumber": 114,
+      "lineText": "wait_stable timeout:1500",
+      "passed": true,
+      "startedAtMs": 1788983888950,
+      "durationMs": 1711
+    },
+    {
+      "index": 39,
+      "lineNumber": 115,
+      "lineText": "tap \"Invite-Link erstellen\" type:button",
+      "passed": true,
+      "startedAtMs": 1788983890662,
+      "durationMs": 814
+    },
+    {
+      "index": 40,
+      "lineNumber": 116,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788983891507,
+      "durationMs": 5204
+    },
+    {
+      "index": 41,
+      "lineNumber": 116,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788983896712,
+      "durationMs": 5280
+    },
+    {
+      "index": 42,
+      "lineNumber": 116,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788983901993,
+      "durationMs": 478
+    },
+    {
+      "index": 43,
+      "lineNumber": 117,
+      "lineText": "wait_for \"Erneut teilen\" timeout:15000",
+      "passed": true,
+      "startedAtMs": 1788983902471,
+      "durationMs": 239
+    },
+    {
+      "index": 44,
+      "lineNumber": 118,
+      "lineText": "extract open_invite_link from ~\"connect?instance\" regex:\"(\\S+://\\S+)\"",
+      "passed": true,
+      "startedAtMs": 1788983902710,
+      "durationMs": 205
+    },
+    {
+      "index": 45,
+      "lineNumber": 119,
+      "lineText": "scroll down to \"Zu Home\" max_scrolls:6",
+      "passed": true,
+      "startedAtMs": 1788983902916,
+      "durationMs": 1700
+    },
+    {
+      "index": 46,
+      "lineNumber": 120,
+      "lineText": "tap \"Zu Home\"",
+      "passed": true,
+      "startedAtMs": 1788983904643,
+      "durationMs": 945
+    },
+    {
+      "index": 47,
+      "lineNumber": 121,
+      "lineText": "wait_stable timeout:8000",
+      "passed": true,
+      "startedAtMs": 1788983905633,
+      "durationMs": 1407
+    },
+    {
+      "index": 48,
+      "lineNumber": 122,
+      "lineText": "wait_for ~\"Circle ${circle_name}\" timeout:20000",
+      "passed": true,
+      "startedAtMs": 1788983907040,
+      "durationMs": 247
+    },
+    {
+      "index": 49,
+      "lineNumber": 123,
+      "lineText": "assert_exists \"Neuen Beitrag erstellen\"",
+      "passed": true,
+      "startedAtMs": 1788983907287,
+      "durationMs": 86
+    },
+    {
+      "index": 50,
+      "lineNumber": 124,
+      "lineText": "checkpoint \"home-with-circle\"",
+      "passed": true,
+      "startedAtMs": 1788983907374,
+      "durationMs": 0
+    },
+    {
+      "index": 51,
+      "lineNumber": 127,
+      "lineText": "tap \"Neuen Beitrag erstellen\"",
+      "passed": true,
+      "startedAtMs": 1788983907374,
+      "durationMs": 504
+    },
+    {
+      "index": 52,
+      "lineNumber": 128,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788983907911,
+      "durationMs": 1390
+    },
+    {
+      "index": 53,
+      "lineNumber": 128,
+      "lineText": "run: tap",
+      "passed": true,
+      "startedAtMs": 1788983909301,
+      "durationMs": 2869
+    },
+    {
+      "index": 54,
+      "lineNumber": 128,
+      "lineText": "run: tap",
+      "passed": true,
+      "startedAtMs": 1788983912216,
+      "durationMs": 1182
+    },
+    {
+      "index": 55,
+      "lineNumber": 128,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788983913444,
+      "durationMs": 1084
+    },
+    {
+      "index": 56,
+      "lineNumber": 128,
+      "lineText": "run: tap",
+      "passed": true,
+      "startedAtMs": 1788983914529,
+      "durationMs": 1035
+    },
+    {
+      "index": 57,
+      "lineNumber": 128,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788983915609,
+      "durationMs": 10077
+    },
+    {
+      "index": 58,
+      "lineNumber": 128,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788983925687,
+      "durationMs": 4198
+    },
+    {
+      "index": 59,
+      "lineNumber": 129,
+      "lineText": "wait_for ~\"Beitragstext\" timeout:20000",
+      "passed": true,
+      "startedAtMs": 1788983929885,
+      "durationMs": 318
+    },
+    {
+      "index": 60,
+      "lineNumber": 131,
+      "lineText": "repeat 3 times {",
+      "passed": true,
+      "startedAtMs": 1788983930204,
+      "durationMs": 1682
+    },
+    {
+      "index": 61,
+      "lineNumber": 139,
+      "lineText": "type ~\"Beitragstext\" → \"Erster Beitrag aus dem E2E-Lauf. Zweiter Satz mit Details.\"",
+      "passed": true,
+      "startedAtMs": 1788983931887,
+      "durationMs": 1874
+    },
+    {
+      "index": 62,
+      "lineNumber": 140,
+      "lineText": "tap \"Neuer Beitrag\"",
+      "passed": true,
+      "startedAtMs": 1788983933808,
+      "durationMs": 859
+    },
+    {
+      "index": 63,
+      "lineNumber": 141,
+      "lineText": "wait_stable timeout:2000",
+      "passed": true,
+      "startedAtMs": 1788983935128,
+      "durationMs": 384
+    },
+    {
+      "index": 64,
+      "lineNumber": 142,
+      "lineText": "repeat until ~\"2 Medien\" max:120 {",
+      "passed": true,
+      "startedAtMs": 1788983935513,
+      "durationMs": 264
+    },
+    {
+      "index": 65,
+      "lineNumber": 145,
+      "lineText": "tap ~\"2 Medien\"",
+      "passed": true,
+      "startedAtMs": 1788983935777,
+      "durationMs": 537
+    },
+    {
+      "index": 66,
+      "lineNumber": 146,
+      "lineText": "wait_stable timeout:1500",
+      "passed": true,
+      "startedAtMs": 1788983936356,
+      "durationMs": 717
+    },
+    {
+      "index": 67,
+      "lineNumber": 147,
+      "lineText": "scroll down to \"Veröffentlichen\" max_scrolls:3",
+      "passed": true,
+      "startedAtMs": 1788983937073,
+      "durationMs": 397
+    },
+    {
+      "index": 68,
+      "lineNumber": 148,
+      "lineText": "tap \"Veröffentlichen\" type:button",
+      "passed": true,
+      "startedAtMs": 1788983938661,
+      "durationMs": 549
+    },
+    {
+      "index": 69,
+      "lineNumber": 149,
+      "lineText": "wait_for ~\"Beitrag wurde veröffentlicht\" timeout:60000",
+      "passed": true,
+      "startedAtMs": 1788983939242,
+      "durationMs": 1105
+    },
+    {
+      "index": 70,
+      "lineNumber": 150,
+      "lineText": "wait_stable timeout:5000",
+      "passed": true,
+      "startedAtMs": 1788983940348,
+      "durationMs": 362
+    },
+    {
+      "index": 71,
+      "lineNumber": 151,
+      "lineText": "checkpoint \"post-published\"",
+      "passed": true,
+      "startedAtMs": 1788983940710,
+      "durationMs": 0
+    },
+    {
+      "index": 72,
+      "lineNumber": 155,
+      "lineText": "scroll down to ~\"Erster Beitrag\" max_scrolls:4",
+      "passed": true,
+      "startedAtMs": 1788983940710,
+      "durationMs": 1552
+    },
+    {
+      "index": 73,
+      "lineNumber": 156,
+      "lineText": "tap /\"\\d{2}, [A-ZÄÖÜ]{3,5}, \"/",
+      "passed": true,
+      "startedAtMs": 1788983942277,
+      "durationMs": 812
+    },
+    {
+      "index": 74,
+      "lineNumber": 157,
+      "lineText": "wait_for \"Mit ❤️ reagieren\" timeout:15000",
+      "passed": true,
+      "startedAtMs": 1788983943132,
+      "durationMs": 318
+    },
+    {
+      "index": 75,
+      "lineNumber": 159,
+      "lineText": "tap \"Mit ❤️ reagieren\"",
+      "passed": true,
+      "startedAtMs": 1788983943451,
+      "durationMs": 806
+    },
+    {
+      "index": 76,
+      "lineNumber": 160,
+      "lineText": "wait_for \"Reaktion ❤️ entfernen\" timeout:10000",
+      "passed": true,
+      "startedAtMs": 1788983944304,
+      "durationMs": 244
+    },
+    {
+      "index": 77,
+      "lineNumber": 161,
+      "lineText": "tap \"Reaktion ❤️ entfernen\"",
+      "passed": true,
+      "startedAtMs": 1788983944549,
+      "durationMs": 755
+    },
+    {
+      "index": 78,
+      "lineNumber": 162,
+      "lineText": "wait_for \"Mit ❤️ reagieren\" timeout:10000",
+      "passed": true,
+      "startedAtMs": 1788983945348,
+      "durationMs": 240
+    },
+    {
+      "index": 79,
+      "lineNumber": 163,
+      "lineText": "tap \"Mit einem beliebigen Emoji reagieren\"",
+      "passed": true,
+      "startedAtMs": 1788983945589,
+      "durationMs": 764
+    },
+    {
+      "index": 80,
+      "lineNumber": 164,
+      "lineText": "wait_for \"Eigenes Emoji\" timeout:5000",
+      "passed": true,
+      "startedAtMs": 1788983946403,
+      "durationMs": 329
+    },
+    {
+      "index": 81,
+      "lineNumber": 165,
+      "lineText": "type \"Eigenes Emoji\" → \"🎉\"",
+      "passed": true,
+      "startedAtMs": 1788983946732,
+      "durationMs": 1215
+    },
+    {
+      "index": 82,
+      "lineNumber": 166,
+      "lineText": "tap \"Mit eigenem Emoji reagieren\"",
+      "passed": true,
+      "startedAtMs": 1788983947997,
+      "durationMs": 891
+    },
+    {
+      "index": 83,
+      "lineNumber": 167,
+      "lineText": "wait_for \"Reaktion 🎉 entfernen\" timeout:10000",
+      "passed": true,
+      "startedAtMs": 1788983948935,
+      "durationMs": 298
+    },
+    {
+      "index": 84,
+      "lineNumber": 169,
+      "lineText": "scroll down to \"Kommentar senden\" max_scrolls:6",
+      "passed": true,
+      "startedAtMs": 1788983949233,
+      "durationMs": 320
+    },
+    {
+      "index": 85,
+      "lineNumber": 170,
+      "lineText": "type ~\"Kommentar schreiben\" → \"Kommentar zum ganzen Beitrag\"",
+      "passed": true,
+      "startedAtMs": 1788983950735,
+      "durationMs": 1429
+    },
+    {
+      "index": 86,
+      "lineNumber": 171,
+      "lineText": "tap \"Kommentar senden\"",
+      "passed": true,
+      "startedAtMs": 1788983952216,
+      "durationMs": 1123
+    },
+    {
+      "index": 87,
+      "lineNumber": 172,
+      "lineText": "wait_stable timeout:3000",
+      "passed": true,
+      "startedAtMs": 1788983953391,
+      "durationMs": 1441
+    },
+    {
+      "index": 88,
+      "lineNumber": 173,
+      "lineText": "tap \"Gespräch\"",
+      "passed": true,
+      "startedAtMs": 1788983954833,
+      "durationMs": 894
+    },
+    {
+      "index": 89,
+      "lineNumber": 174,
+      "lineText": "wait_stable timeout:2000",
+      "passed": true,
+      "startedAtMs": 1788983955770,
+      "durationMs": 729
+    },
+    {
+      "index": 90,
+      "lineNumber": 175,
+      "lineText": "scroll down to \"Kommentar zum ganzen Beitrag\" max_scrolls:3",
+      "passed": true,
+      "startedAtMs": 1788983956500,
+      "durationMs": 316
+    },
+    {
+      "index": 91,
+      "lineNumber": 177,
+      "lineText": "tap /\"^Foto 1$\"/",
+      "passed": true,
+      "startedAtMs": 1788983957989,
+      "durationMs": 583
+    },
+    {
+      "index": 92,
+      "lineNumber": 178,
+      "lineText": "wait_for ~\"Zu diesem Medium schreiben\" timeout:5000",
+      "passed": true,
+      "startedAtMs": 1788983958620,
+      "durationMs": 278
+    },
+    {
+      "index": 93,
+      "lineNumber": 179,
+      "lineText": "type ~\"Kommentar schreiben\" → \"Kommentar nur zum ersten Foto\"",
+      "passed": true,
+      "startedAtMs": 1788983958898,
+      "durationMs": 1446
+    },
+    {
+      "index": 94,
+      "lineNumber": 180,
+      "lineText": "tap \"Kommentar senden\"",
+      "passed": true,
+      "startedAtMs": 1788983960392,
+      "durationMs": 1092
+    },
+    {
+      "index": 95,
+      "lineNumber": 181,
+      "lineText": "wait_stable timeout:3000",
+      "passed": true,
+      "startedAtMs": 1788983961529,
+      "durationMs": 1418
+    },
+    {
+      "index": 96,
+      "lineNumber": 182,
+      "lineText": "tap \"Gespräch\"",
+      "passed": true,
+      "startedAtMs": 1788983962947,
+      "durationMs": 872
+    },
+    {
+      "index": 97,
+      "lineNumber": 183,
+      "lineText": "wait_stable timeout:2000",
+      "passed": true,
+      "startedAtMs": 1788983963864,
+      "durationMs": 725
+    },
+    {
+      "index": 98,
+      "lineNumber": 184,
+      "lineText": "scroll down to \"Kommentar nur zum ersten Foto\" max_scrolls:3",
+      "passed": true,
+      "startedAtMs": 1788983964590,
+      "durationMs": 320
+    },
+    {
+      "index": 99,
+      "lineNumber": 185,
+      "lineText": "assert_not_exists \"Kommentar zum ganzen Beitrag\"",
+      "passed": true,
+      "startedAtMs": 1788983966102,
+      "durationMs": 137
+    },
+    {
+      "index": 100,
+      "lineNumber": 186,
+      "lineText": "tap \"Ganzer Beitrag\"",
+      "passed": true,
+      "startedAtMs": 1788983966239,
+      "durationMs": 548
+    },
+    {
+      "index": 101,
+      "lineNumber": 187,
+      "lineText": "wait_stable timeout:2000",
+      "passed": true,
+      "startedAtMs": 1788983966832,
+      "durationMs": 727
+    },
+    {
+      "index": 102,
+      "lineNumber": 188,
+      "lineText": "scroll down to \"Kommentar zum ganzen Beitrag\" max_scrolls:3",
+      "passed": true,
+      "startedAtMs": 1788983967560,
+      "durationMs": 240
+    },
+    {
+      "index": 103,
+      "lineNumber": 190,
+      "lineText": "tap \"Kommentar entfernen\"",
+      "passed": true,
+      "startedAtMs": 1788983968974,
+      "durationMs": 587
+    },
+    {
+      "index": 104,
+      "lineNumber": 191,
+      "lineText": "wait_for \"Kommentar entfernen?\" timeout:5000",
+      "passed": true,
+      "startedAtMs": 1788983969604,
+      "durationMs": 294
+    },
+    {
+      "index": 105,
+      "lineNumber": 192,
+      "lineText": "tap \"Entfernen\"",
+      "passed": true,
+      "startedAtMs": 1788983969898,
+      "durationMs": 784
+    },
+    {
+      "index": 106,
+      "lineNumber": 193,
+      "lineText": "wait_stable timeout:4000",
+      "passed": true,
+      "startedAtMs": 1788983970727,
+      "durationMs": 718
+    },
+    {
+      "index": 107,
+      "lineNumber": 194,
+      "lineText": "assert_not_exists \"Kommentar zum ganzen Beitrag\"",
+      "passed": true,
+      "startedAtMs": 1788983971446,
+      "durationMs": 286
+    },
+    {
+      "index": 108,
+      "lineNumber": 196,
+      "lineText": "scroll up to \"Speichern\" max_scrolls:5",
+      "passed": true,
+      "startedAtMs": 1788983971733,
+      "durationMs": 122
+    },
+    {
+      "index": 109,
+      "lineNumber": 197,
+      "lineText": "tap \"Speichern\"",
+      "passed": true,
+      "startedAtMs": 1788983973025,
+      "durationMs": 581
+    },
+    {
+      "index": 110,
+      "lineNumber": 198,
+      "lineText": "wait_for ~\"gespeichert\" timeout:20000",
+      "passed": false,
+      "startedAtMs": 1788983973651,
+      "durationMs": 20350,
+      "error": "element not found within timeout: ~\"gespeichert\""
+    }
+  ],
+  "error": "step 110 (line 198): element not found within timeout: ~\"gespeichert\"",
+  "extracted": {
+    "app": "app.beisammen.app.dev",
+    "circle_description": "Automatischer MobAI-Testlauf",
+    "circle_name": "E2E 2026-09-09 19:57",
+    "member_email": "beisammen-e2e-member+clerk_test@example.com",
+    "member_password": "E2eBeisammenMember2026",
+    "open_invite_link": "beisammen://connect?instance=https%3A%2F%2Ffastidious-badger-125.eu-west-1.convex.site\u0026invite=a49bca03-4496-4413-97c8-357af4604981",
+    "owner_email": "e2e@niklasschmidt.dev",
+    "owner_password": "e2e123456",
+    "scheme": "beisammen-dev"
+  }
+}

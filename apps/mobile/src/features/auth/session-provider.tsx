@@ -5,6 +5,7 @@ import { createContext, useContext, useEffectEvent, useMemo, type PropsWithChild
 import type { AppSession, InstanceConfig } from '@beisammen/contracts';
 
 import { logOutPurchases } from '@/features/billing/purchases';
+import { clearExportedRecoveryCodeFile } from '@/features/crypto/recovery-code-export';
 import { InstanceProvider, useInstance } from '@/features/instances/instance-provider';
 import { clearAvatarImageCache } from '@/features/media/avatar-image-cache';
 import { clearShareDownloads } from '@/features/media/client';
@@ -83,6 +84,11 @@ function SessionBridge({ children }: PropsWithChildren) {
     await clearLocalPlaintextMedia().catch((error) => {
       logger.warn('Failed to clear local plaintext media during sign-out', { error });
     });
+    try {
+      clearExportedRecoveryCodeFile();
+    } catch (error) {
+      logger.warn('Failed to clear exported recovery code during sign-out', { error });
+    }
     await logOutPurchases();
     await clerk.signOut();
     instanceContext.setActiveCircleId(null);

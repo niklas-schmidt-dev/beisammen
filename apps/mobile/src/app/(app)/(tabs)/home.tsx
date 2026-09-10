@@ -140,21 +140,39 @@ export default function HomeScreen() {
   //  Draft caption sync
   // ---------------------------------------------------------------------------
 
-  useEffect(() => {
-    setDraftCaption(activeDraft?.caption ?? '');
-  }, [activeDraft?._id, activeDraft?.caption]);
+  // Adopt the server caption only when the draft itself changes (opened,
+  // created, published or deleted). Re-syncing on every caption update from
+  // the server races with fast typing: the debounced save below echoes a
+  // stale, trimmed caption back and overwrites characters typed meanwhile.
+  const activeDraftId = activeDraft?._id ?? null;
+  const activeDraftCaption = activeDraft?.caption;
+  const syncedDraftIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!activeDraft) return;
-    if (draftCaption === activeDraft.caption) return;
+    const previousDraftId = syncedDraftIdRef.current;
+    if (previousDraftId === activeDraftId) return;
+    syncedDraftIdRef.current = activeDraftId;
+
+    // A draft created while the user is already typing has no caption yet;
+    // keep the local text so the save effect persists it.
+    const keepLocalText =
+      previousDraftId === null && activeDraftId !== null && activeDraftCaption === undefined;
+    if (!keepLocalText) {
+      setDraftCaption(activeDraftCaption ?? '');
+    }
+  }, [activeDraftId, activeDraftCaption]);
+
+  useEffect(() => {
+    if (!activeDraftId) return;
+    if ((draftCaption.trim() || undefined) === activeDraftCaption) return;
 
     const timeout = setTimeout(() => {
       void updateDraft({
-        shareBatchId: activeDraft._id,
+        shareBatchId: activeDraftId,
         caption: draftCaption.trim() || undefined,
       }).catch((error) => {
         logger.warn('Draft update failed', {
-          shareBatchId: activeDraft._id,
+          shareBatchId: activeDraftId,
           error,
         });
         setFeedback(error instanceof Error ? error.message : gt('Entwurf konnte nicht aktualisiert werden.'));
@@ -162,7 +180,7 @@ export default function HomeScreen() {
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [activeDraft, draftCaption, gt, updateDraft]);
+  }, [activeDraftId, activeDraftCaption, draftCaption, gt, updateDraft]);
 
   // ---------------------------------------------------------------------------
   //  Animations

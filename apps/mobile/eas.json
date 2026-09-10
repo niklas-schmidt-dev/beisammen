@@ -19,7 +19,8 @@
       "channel": "preview",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "preview"
-      }
+      },
+      "uploadSourceMaps": true
     },
     "store-sandbox": {
       "autoIncrement": true,
@@ -28,7 +29,8 @@
       "channel": "preview",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "preview"
-      }
+      },
+      "uploadSourceMaps": true
     },
     "production": {
       "autoIncrement": true,
@@ -37,7 +39,8 @@
       "channel": "production",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "production"
-      }
+      },
+      "uploadSourceMaps": true
     }
   },
   "submit": {

@@ -1,0 +1,15 @@
+# RevenueCat paywall (Test Store in development builds). It opens
+# automatically from onboarding when the owner account has no active cloud
+# plan yet; "Weiter" buys the pre-selected (recommended) package and the
+# Test Store confirms with its own dialog.
+wait_stable timeout:8000
+if_exists "Test valid purchase" {
+    tap "Test valid purchase"
+    wait_stable timeout:15000
+}
+if_exists "Käufe wiederherstellen" {
+    tap "Weiter" type:button
+    wait_for "Test valid purchase" timeout:15000
+    tap "Test valid purchase"
+    wait_stable timeout:15000
+}

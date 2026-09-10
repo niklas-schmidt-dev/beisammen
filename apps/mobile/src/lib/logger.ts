@@ -1,4 +1,5 @@
 import { appEnv } from '@/lib/env';
+import { reportLoggedError } from '@/features/observe/log-errors';
 
 export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
 export type LogContext = Record<string, unknown>;
@@ -242,6 +243,9 @@ class AppLogger implements Logger {
     message: string,
     context?: LogContext,
   ) {
+    if (level === 'warn' || level === 'error') {
+      reportLoggedError(this.namespace, message, context?.error ?? this.baseContext.error);
+    }
     if (!shouldLog(level)) {
       return;
     }

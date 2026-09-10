@@ -1,0 +1,77 @@
+# Sign in (or register on first use) with an email + password account.
+# Expects the sign-in screen to be visible (call after sign-out.mob or on a
+# fresh launch without a session).
+# Clerk dev instances accept "+clerk_test" addresses with the fixed OTP 424242
+# for both e-mail verification and new-device confirmation. Passwords must be
+# at least 15 characters for new accounts (Clerk policy); avoid special
+# characters that the on-device keyboard may not type reliably.
+# Param: email
+# Param: password
+# Param: otp = 424242
+
+wait_for "E-Mail-Adresse" timeout:30000
+type "E-Mail-Adresse" → "${email}" clear
+# Tapping static copy dismisses the keyboard (the screen has no Done button).
+tap "oder"
+wait_stable timeout:1500
+scroll down to "Passwort" max_scrolls:3
+type "Passwort" → "${password}" clear
+tap "oder"
+wait_stable timeout:1500
+# Buttons expose their plain label via accessibilityLabel (see PrimaryAction).
+scroll down to "Anmelden" type:button max_scrolls:3
+tap "Anmelden" type:button
+repeat while ~"Anmeldung läuft" max:60 {
+    delay 500
+}
+wait_stable timeout:4000
+
+# Unknown account: switch to registration and verify the e-mail.
+if_exists ~"Noch kein Konto" {
+    tap ~"Noch kein Konto"
+    wait_stable timeout:2000
+    type "E-Mail-Adresse" → "${email}" clear
+    tap "oder"
+    wait_stable timeout:1500
+    scroll down to "Passwort" max_scrolls:3
+    type "Passwort" → "${password}" clear
+    tap "oder"
+    wait_stable timeout:1500
+    scroll down to "Konto erstellen" type:button max_scrolls:3
+    tap "Konto erstellen" type:button
+    wait_for "E-Mail bestätigen" timeout:20000
+    type "Bestätigungscode" → "${otp}"
+    tap "E-Mail bestätigen"
+    wait_stable timeout:1500
+    scroll down to "Code bestätigen" type:button max_scrolls:3
+    tap "Code bestätigen" type:button
+    repeat while ~"Wird geprüft" max:60 {
+        delay 500
+    }
+}
+
+# New device? Clerk asks for an e-mail code.
+if_exists "Neues Gerät bestätigen" {
+    type "Bestätigungscode" → "${otp}"
+    tap "Neues Gerät bestätigen"
+    wait_stable timeout:1500
+    scroll down to "Code bestätigen" type:button max_scrolls:3
+    tap "Code bestätigen" type:button
+    repeat while ~"Wird geprüft" max:60 {
+        delay 500
+    }
+}
+
+# iOS offers to save the password after a successful sign-in.
+wait_stable timeout:5000
+if_exists "Passwort sichern?" {
+    tap "Später"
+    wait_stable timeout:3000
+}
+
+# First launch for this account on this device shows the recovery code gate.
+wait_stable timeout:10000
+if_exists "Ich habe den Code gesichert" {
+    tap "Ich habe den Code gesichert"
+}
+wait_stable timeout:5000

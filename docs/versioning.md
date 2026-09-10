@@ -35,12 +35,15 @@ Never ship a client that requires functions that are not deployed yet.
 
 ## OTA updates (EAS Update)
 
-- `runtimeVersion` uses the `fingerprint` policy: JS-only changes ship OTA,
-  native changes (new modules, permissions, SDK upgrades) change the
-  fingerprint and require a store build.
+- `runtimeVersion` uses the `appVersion` policy: the runtime is the native
+  `version` in `app.config.ts`. JS-only changes ship OTA; native changes (new
+  modules, permissions, SDK upgrades) must bump `version` and ship as a store
+  build, otherwise installed builds would receive an incompatible update.
 - Channels map to build profiles: `production`, `preview` (also used by
-  `store-sandbox` builds), `development`.
-- Publish with `pnpm eas update --channel production` from `apps/mobile`.
+  `store-sandbox` builds), `development`. Local `expo run:ios` builds have no
+  channel and never receive OTA updates.
+- Publish with `pnpm eas update --channel production --environment production`
+  from `apps/mobile` (commit first: the bundle contains the working tree).
 - The app checks for updates on launch and on foregrounding
   (`src/features/app-config/use-ota-updates.ts`); downloads apply on the next
   cold start. `eas update:rollback` reverts a bad update.

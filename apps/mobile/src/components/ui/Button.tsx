@@ -53,6 +53,7 @@ export const Button = memo(function Button({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       disabled={isDisabled}
       pressedScale={0.97}

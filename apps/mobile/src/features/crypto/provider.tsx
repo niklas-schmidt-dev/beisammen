@@ -142,7 +142,7 @@ export function CryptoProvider({ children }: PropsWithChildren) {
         }
       } catch (error) {
         logger.error('User key bootstrap failed.', {
-          message: error instanceof Error ? error.message : String(error),
+          error,
         });
 
         if (!cancelled) {

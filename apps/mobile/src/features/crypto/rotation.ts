@@ -49,7 +49,7 @@ export async function rotateCircleKeyNow(options: {
   } catch (error) {
     logger.warn('Circle key rotation failed; the server keeps uploads gated until it succeeds.', {
       circleId,
-      message: error instanceof Error ? error.message : String(error),
+      error,
     });
 
     return false;

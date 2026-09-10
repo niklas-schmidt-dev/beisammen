@@ -1,0 +1,439 @@
+# beisammen dev - full end-to-end flow on a real iPhone
+# Tags: e2e, full, ios
+# Timeout: 120000
+# Alerts: accept
+# On-Fail: abort
+#
+# Two accounts on the Clerk dev instance: the owner (a regular account) and a
+# throwaway member (+clerk_test address, fixed OTP 424242, no mails sent).
+# The owner buys the Test Store plan if needed, creates a test circle,
+# publishes, comments, reacts and manages members; the member registers,
+# joins via an e-mail-bound invite, comments and reacts; the owner moderates,
+# changes roles, removes the member, deletes the post and finally deletes
+# the circle again.
+#
+# Conventions that matter on this UI (see README):
+# - Buttons with an icon are announced as "<glyph>, Label"; match them with a
+#   the plain label (Button, PrimaryAction, MiniAction set accessibilityLabel);
+#   segment toggles (E-Mail/Offen, Karte/Zeitleiste) still need ~"partial".
+# - Section headers render uppercase; use ~"partial" (case-insensitive).
+# - The keyboard has no Done button: tap static copy to dismiss it.
+# - Below-the-fold elements must be scrolled to before wait_for/tap.
+# Param: owner_email = e2e@niklasschmidt.dev
+# Param: owner_password = e2e123456
+# Param: member_email = beisammen-e2e-member+clerk_test@example.com
+# Param: member_password = E2eBeisammenMember2026
+# Param: app = app.beisammen.app.dev
+# Param: scheme = beisammen-dev
+
+eval "vars.circle_name = 'E2E ' + new Date().toISOString().slice(0, 16).replace('T', ' ')"
+eval "vars.circle_description = 'Automatischer MobAI-Testlauf'"
+
+# ---------------------------------------------------------------- owner: auth
+# Terminate explicitly first: an instance launched by another tool (Xcode,
+# devicectl) is not always replaced by `app … fresh` alone.
+kill_app "${app}"
+delay 2000
+app "${app}"
+wait_stable timeout:10000
+# A hung launch keeps the (near-black) native splash up; relaunch once.
+assert_exists type:button timeout:30000 on_fail:skip
+if_exists type:button {
+    checkpoint "app-launched"
+} else {
+    kill_app "${app}"
+    delay 2000
+    app "${app}"
+    wait_stable timeout:15000
+    assert_exists type:button timeout:30000
+}
+if_exists "Ich habe den Code gesichert" {
+    tap "Ich habe den Code gesichert"
+    wait_stable timeout:5000
+}
+# An aborted run may have left a session behind. Keep it when it is the
+# owner's, otherwise sign out and sign in with the owner credentials.
+if_exists "E-Mail-Adresse" {
+    run "./flows/sign-in.mob" email="${owner_email}" password="${owner_password}"
+} else {
+    open_link "${scheme}://settings/account"
+    wait_stable timeout:8000
+    wait_for "Abmelden" timeout:20000
+    if_exists ~"${owner_email}" {
+        checkpoint "owner-session-reused"
+    } else {
+        scroll down to "Abmelden" max_scrolls:5
+        tap "Abmelden" type:button
+        wait_for "E-Mail-Adresse" timeout:60000
+        wait_stable timeout:3000
+        run "./flows/sign-in.mob" email="${owner_email}" password="${owner_password}"
+    }
+    app "${app}" fresh
+    wait_stable timeout:10000
+}
+checkpoint "owner-signed-in"
+
+# Leftover circle from an aborted run? Delete it first so onboarding is shown.
+if_exists ~"Circle E2E" {
+    run "./flows/delete-active-e2e-circle.mob"
+    tap ~"Home, tab"
+    wait_stable timeout:8000
+}
+
+# ---------------------------------------------------- owner: onboarding + circle
+wait_for "Neuen Circle erstellen" timeout:20000
+assert_exists "Schön, dass du da bist"
+tap "Mit Einladung beitreten"
+wait_for "Einladungslink oder Code" timeout:10000
+assert_exists "Circle beitreten"
+tap "Zurück"
+wait_for "Neuen Circle erstellen" timeout:10000
+tap "Neuen Circle erstellen"
+wait_stable timeout:8000
+
+# Cloud deployments require an active plan; the RevenueCat Test Store paywall
+# opens automatically when the owner has none yet.
+run "./flows/buy-test-plan-if-needed.mob"
+
+wait_for "Circle-Name" timeout:20000
+assert_exists "Dein erster Circle"
+type "Circle-Name" → "${circle_name}"
+type "Beschreibung (optional)" → "${circle_description}"
+tap "WILLKOMMEN"
+wait_stable timeout:1500
+tap "Circle erstellen" type:button
+wait_for "Circle erstellt" timeout:20000
+checkpoint "circle-created"
+
+# Open one-time invite straight from onboarding (exercises the share sheet).
+scroll down to "Invite-Link erstellen" max_scrolls:8
+tap ~"Offen" type:button
+wait_stable timeout:1500
+scroll down to "Invite-Link erstellen" max_scrolls:4
+scroll down
+wait_stable timeout:1500
+tap "Invite-Link erstellen" type:button
+run "./flows/dismiss-share-sheet.mob"
+wait_for "Erneut teilen" timeout:15000
+extract open_invite_link from ~"connect?instance" regex:"(\S+://\S+)"
+scroll down to "Zu Home" max_scrolls:6
+tap "Zu Home"
+wait_stable timeout:8000
+wait_for ~"Circle ${circle_name}" timeout:20000
+assert_exists "Neuen Beitrag erstellen"
+checkpoint "home-with-circle"
+
+# ------------------------------------------------------- owner: publish a post
+tap "Neuen Beitrag erstellen"
+run "./flows/pick-two-photos.mob"
+wait_for ~"Beitragstext" timeout:20000
+# The GPS fallback prompt can appear a few seconds after the picker closes.
+repeat 3 times {
+    if_exists "Ort ergänzen?" {
+        tap "Nicht jetzt"
+    }
+    wait_stable timeout:3000
+}
+# Uploads run while the draft sheet is open; the media count appears when the
+# assets are registered.
+type ~"Beitragstext" → "Erster Beitrag aus dem E2E-Lauf. Zweiter Satz mit Details."
+tap "Neuer Beitrag"
+wait_stable timeout:2000
+repeat until ~"2 Medien" max:120 {
+    delay 1000
+}
+tap ~"2 Medien"
+wait_stable timeout:1500
+scroll down to "Veröffentlichen" max_scrolls:3
+tap "Veröffentlichen" type:button
+wait_for ~"Beitrag wurde veröffentlicht" timeout:60000
+wait_stable timeout:5000
+checkpoint "post-published"
+
+# ------------------------------------------------ owner: share detail features
+# The feed card's hero image opens share detail; its label is the date chip.
+scroll down to ~"Erster Beitrag" max_scrolls:4
+tap /"\d{2}, [A-ZÄÖÜ]{3,5}, "/
+wait_for "Mit ❤️ reagieren" timeout:15000
+# reactions: quick emoji, remove again, custom emoji
+tap "Mit ❤️ reagieren"
+wait_for "Reaktion ❤️ entfernen" timeout:10000
+tap "Reaktion ❤️ entfernen"
+wait_for "Mit ❤️ reagieren" timeout:10000
+tap "Mit einem beliebigen Emoji reagieren"
+wait_for "Eigenes Emoji" timeout:5000
+type "Eigenes Emoji" → "🎉"
+tap "Mit eigenem Emoji reagieren"
+wait_for "Reaktion 🎉 entfernen" timeout:10000
+# share-level comment
+scroll down to "Kommentar senden" max_scrolls:6
+type ~"Kommentar schreiben" → "Kommentar zum ganzen Beitrag"
+tap "Kommentar senden"
+wait_stable timeout:3000
+tap "Gespräch"
+wait_stable timeout:2000
+scroll down to "Kommentar zum ganzen Beitrag" max_scrolls:3
+# asset-level comment on the first photo
+tap /"^Foto 1$"/
+wait_for ~"Zu diesem Medium schreiben" timeout:5000
+type ~"Kommentar schreiben" → "Kommentar nur zum ersten Foto"
+tap "Kommentar senden"
+wait_stable timeout:3000
+tap "Gespräch"
+wait_stable timeout:2000
+scroll down to "Kommentar nur zum ersten Foto" max_scrolls:3
+assert_not_exists "Kommentar zum ganzen Beitrag"
+tap "Ganzer Beitrag"
+wait_stable timeout:2000
+scroll down to "Kommentar zum ganzen Beitrag" max_scrolls:3
+# delete own comment
+tap "Kommentar entfernen"
+wait_for "Kommentar entfernen?" timeout:5000
+tap "Entfernen"
+wait_stable timeout:4000
+assert_not_exists "Kommentar zum ganzen Beitrag"
+# media actions + fullscreen
+scroll up to "Speichern" max_scrolls:5
+tap "Speichern"
+wait_for ~"gespeichert" timeout:20000
+tap ~"gespeichert" on_fail:skip
+scroll up to "Foto im Vollbild öffnen" max_scrolls:5
+tap "Foto im Vollbild öffnen"
+wait_for "Schließen" timeout:8000
+tap "Schließen"
+wait_for "Zurück" timeout:5000
+tap "Zurück"
+wait_for "Neuen Beitrag erstellen" timeout:10000
+checkpoint "share-detail-done"
+
+# -------------------------------------------------------- owner: other tabs
+tap ~"Aktivität, tab"
+wait_for "Aktivität" timeout:10000
+assert_exists ~"Neue Kommentare, Reaktionen und Beiträge"
+assert_exists ~"hat einen Beitrag geteilt"
+tap ~"Erinnerungen, tab"
+wait_for "Erinnerungen" timeout:10000
+wait_for ~"aus ${circle_name} öffnen" timeout:20000
+tap /"· \d+$"/ type:button
+wait_stable timeout:2000
+tap ~"aus ${circle_name} öffnen" [0]
+wait_for "Gespräch" timeout:15000
+tap "Gespräch"
+wait_for "Mit ❤️ reagieren" timeout:15000
+tap "Zurück"
+wait_stable timeout:3000
+tap "Zurück"
+wait_for ~"Karte" timeout:10000
+tap ~"Karte" type:button
+wait_for "Circle wählen" timeout:15000
+tap ~"Zeitleiste" type:button
+wait_for "Alle Monate" timeout:10000
+checkpoint "tabs-done"
+
+# ------------------------------------------------------------ owner: settings
+tap ~"Einstellungen, tab"
+wait_for "Konto öffnen" timeout:10000
+tap "Konto öffnen"
+wait_for "Abmelden" timeout:10000
+assert_exists ~"${owner_email}"
+tap "Zurück"
+wait_for "Tarif & Nutzung" timeout:10000
+tap "Tarif & Nutzung"
+wait_for ~"Deine Medien" timeout:15000
+scroll down to ~"Nutzung nach Circle" max_scrolls:5
+scroll up to "Zurück" max_scrolls:5
+tap "Zurück"
+wait_for "Benachrichtigungen" timeout:10000
+tap "Benachrichtigungen"
+wait_for "Kommentare" timeout:10000
+toggle type:switch near "Kommentare" off
+wait_for ~"Push-Mitteilung deaktiviert" timeout:10000
+toggle type:switch near "Kommentare" on
+wait_for ~"Push-Mitteilung aktiviert" timeout:10000
+tap "Zurück"
+wait_for "Wiederherstellungscode anzeigen" timeout:10000
+tap "Wiederherstellungscode anzeigen"
+wait_for "Code kopieren" timeout:15000
+tap "Code kopieren"
+wait_for ~"Code kopiert" timeout:10000
+tap "Zurück"
+wait_for "Deine Circles" timeout:10000
+# Speicher & Diagnose is only linked in dev/self-hosted UIs; reach it by deep link.
+open_link "${scheme}://settings/advanced"
+wait_for "Speicher prüfen" timeout:15000
+tap "Speicher prüfen"
+wait_for ~"sind aktiv" timeout:60000
+tap "Diagnose anzeigen"
+wait_for "Diagnose" type:text timeout:5000
+tap "OK"
+wait_stable timeout:2000
+tap "Zurück"
+wait_for "Deine Circles" timeout:10000
+checkpoint "settings-done"
+
+# --------------------------------------------- owner: circle management (1/2)
+tap "Deine Circles"
+wait_for "Circle erstellen" timeout:10000
+tap "Circle beitreten"
+wait_for "Aus Zwischenablage einfügen" timeout:10000
+tap "Zurück"
+wait_for "Circle erstellen" timeout:10000
+tap "Circle erstellen"
+wait_for "Benenne zuerst die Menschen." timeout:10000
+tap "Zurück"
+wait_for "Circle erstellen" timeout:10000
+tap "${circle_name}"
+wait_for "Circle-Details" timeout:15000
+wait_stable timeout:2000
+assert_exists ~"Owner"
+type "Beschreibung" → "Beschreibung aus dem E2E-Lauf" clear
+tap "Circle-Details"
+wait_stable timeout:2000
+tap "Details speichern"
+wait_for ~"Circle-Details aktualisiert" timeout:10000
+scroll down to "Statistiken" max_scrolls:6
+assert_exists ~"Mitglieder"
+# personal e-mail invite for the member account
+scroll down to "Invite-Link erstellen" max_scrolls:12
+tap ~"E-Mail" type:button
+wait_stable timeout:1500
+type "name@example.com" → "${member_email}"
+tap ~"EINLADEN"
+wait_stable timeout:2000
+scroll down to "Invite-Link erstellen" max_scrolls:4
+scroll down
+wait_stable timeout:1500
+tap "Invite-Link erstellen" type:button
+run "./flows/dismiss-share-sheet.mob"
+wait_for "Erneut teilen" timeout:15000
+extract member_invite_link from ~"connect?instance" regex:"(\S+://\S+)"
+scroll down to "Einladungen" max_scrolls:10
+scroll down
+wait_stable timeout:1500
+assert_exists ~"Ausstehend"
+# withdraw the open one-time link from onboarding
+tap "Zurückziehen" near "Offener Einmal-Link"
+wait_for "Einladung zurückziehen?" timeout:5000
+tap "Zurückziehen" type:button
+wait_for ~"wurde zurückgezogen" timeout:10000
+scroll down to "Circle löschen" type:button max_scrolls:10
+assert_exists "Circle löschen" type:button
+scroll up to "Zurück" max_scrolls:14
+tap "Zurück"
+wait_for "Deine Circles" timeout:10000
+checkpoint "owner-circle-management-1"
+
+run "./flows/sign-out.mob"
+checkpoint "owner-signed-out"
+
+# ------------------------------------------------------------ member: join
+run "./flows/sign-in.mob" email="${member_email}" password="${member_password}"
+wait_for "Mit Einladung beitreten" timeout:20000
+tap "Mit Einladung beitreten"
+wait_for "Einladungslink oder Code" timeout:10000
+type "Einladungslink oder Code" → "${member_invite_link}"
+tap "WILLKOMMEN"
+wait_stable timeout:5000
+wait_for ~"Persönlicher E-Mail-Link" timeout:20000
+tap ~"beitreten" type:button
+wait_stable timeout:8000
+wait_for ~"Circle ${circle_name}" timeout:20000
+checkpoint "member-joined"
+
+# member reacts and comments on the owner's post
+tap ~"hat einen Beitrag geteilt"
+wait_for "Mit 👏 reagieren" timeout:15000
+tap "Mit 👏 reagieren"
+wait_for "Reaktion 👏 entfernen" timeout:10000
+scroll down to "Kommentar senden" max_scrolls:6
+type ~"Kommentar schreiben" → "Hallo vom Mitglied"
+tap "Kommentar senden"
+wait_stable timeout:3000
+tap "Gespräch"
+wait_stable timeout:2000
+scroll down to "Hallo vom Mitglied" max_scrolls:3
+scroll up to "Zurück" max_scrolls:8
+tap "Zurück"
+wait_for "Neuen Beitrag erstellen" timeout:10000
+# member sees leave (not delete) in circle management
+tap ~"Einstellungen, tab"
+wait_for "Deine Circles" timeout:10000
+tap "Deine Circles"
+wait_for "${circle_name}" timeout:10000
+tap "${circle_name}"
+wait_for "Circle-Details" timeout:15000
+wait_stable timeout:2000
+scroll down to "Circle verlassen" type:button max_scrolls:12
+assert_not_exists "Circle löschen"
+scroll up to "Zurück" max_scrolls:12
+tap "Zurück"
+wait_for "Deine Circles" timeout:10000
+run "./flows/sign-out.mob"
+checkpoint "member-signed-out"
+
+# -------------------------------------------- owner: moderation + cleanup
+run "./flows/sign-in.mob" email="${owner_email}" password="${owner_password}"
+wait_for "Neuen Beitrag erstellen" timeout:20000
+tap ~"Aktivität, tab"
+wait_for ~"${member_email} hat einen Beitrag kommentiert" timeout:20000
+tap ~"${member_email} hat einen Beitrag kommentiert"
+wait_for "Mit ❤️ reagieren" timeout:15000
+scroll down to "Hallo vom Mitglied" max_scrolls:6
+tap "Kommentar entfernen" near "Hallo vom Mitglied"
+wait_for "Kommentar entfernen?" timeout:5000
+tap "Entfernen"
+wait_stable timeout:4000
+assert_not_exists "Hallo vom Mitglied"
+scroll up to "Zurück" max_scrolls:8
+tap "Zurück"
+wait_stable timeout:3000
+# member roles
+tap ~"Einstellungen, tab"
+wait_for "Deine Circles" timeout:10000
+tap "Deine Circles"
+wait_for "${circle_name}" timeout:10000
+tap "${circle_name}"
+wait_for "Circle-Details" timeout:15000
+wait_stable timeout:2000
+scroll down to "Als Admin" max_scrolls:12
+tap "Als Admin"
+wait_for "Rolle ändern?" timeout:5000
+tap "Bestätigen"
+wait_for ~"Rolle für" timeout:10000
+wait_for "Als Mitglied" timeout:10000
+tap "Als Mitglied"
+wait_for "Rolle ändern?" timeout:5000
+tap "Bestätigen"
+wait_for ~"Rolle für" timeout:10000
+wait_stable timeout:2000
+tap "Entfernen" near "Owner geben"
+wait_for "Mitglied entfernen?" timeout:5000
+tap "Entfernen" type:button
+wait_for ~"wurde entfernt" timeout:10000
+wait_stable timeout:2000
+assert_not_exists "Owner geben"
+scroll up to "Zurück" max_scrolls:12
+tap "Zurück"
+wait_for "Deine Circles" timeout:10000
+# delete the post from Home
+tap ~"Home, tab"
+wait_for "Neuen Beitrag erstellen" timeout:15000
+scroll down to "Beitrag löschen" max_scrolls:5
+tap "Beitrag löschen"
+wait_for "Beitrag löschen?" timeout:5000
+tap "Löschen"
+wait_for ~"Beitrag wurde gelöscht" timeout:15000
+wait_stable timeout:3000
+checkpoint "post-deleted"
+
+# delete the circle
+run "./flows/delete-active-e2e-circle.mob"
+tap "Deine Circles"
+wait_for "Circle erstellen" timeout:10000
+assert_not_exists "${circle_name}"
+tap "Zurück"
+wait_for "Konto öffnen" timeout:10000
+checkpoint "circle-deleted"
+
+run "./flows/sign-out.mob"
+checkpoint "done"

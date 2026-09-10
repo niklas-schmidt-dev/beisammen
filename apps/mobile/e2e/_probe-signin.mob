@@ -1,0 +1,5 @@
+# sign-in probe
+# Param: app = app.beisammen.app.dev
+app "${app}" fresh
+run "./flows/sign-in.mob" email="e2e@niklasschmidt.dev" password="e2e123456"
+observe

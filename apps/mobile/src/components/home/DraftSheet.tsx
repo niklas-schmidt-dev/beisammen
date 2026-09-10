@@ -265,6 +265,7 @@ export const DraftSheet = memo(function DraftSheet({
                 ]}
               >
                 <TextInput
+                  accessibilityLabel={gt('Beitragstext')}
                   value={caption}
                   onChangeText={onChangeCaption}
                   placeholder={gt('Schreib etwas dazu...')}

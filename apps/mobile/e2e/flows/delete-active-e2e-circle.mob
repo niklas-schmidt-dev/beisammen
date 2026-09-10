@@ -1,0 +1,15 @@
+# Delete the first circle whose name starts with "E2E" via Einstellungen ›
+# Deine Circles › <circle> › Circle löschen (owner only). Circle detail is a
+# stack screen without the tab bar, so it ends back on "Deine Circles".
+tap ~"Einstellungen, tab"
+wait_for "Deine Circles" timeout:10000
+tap "Deine Circles"
+wait_for ~"E2E" timeout:10000
+tap ~"E2E" type:button [0]
+wait_for "Circle-Details" timeout:15000
+wait_stable timeout:2000
+scroll down to "Circle löschen" type:button max_scrolls:14
+tap "Circle löschen" type:button
+wait_for "Circle wirklich löschen?" timeout:5000
+tap "Circle löschen" type:button
+wait_stable timeout:8000

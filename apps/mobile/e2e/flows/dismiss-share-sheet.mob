@@ -1,0 +1,12 @@
+# The invite composer opens the native share sheet after creating a link.
+# The sheet is a popover without its own close button; tapping the dimmed
+# area above it dismisses it.
+wait_stable timeout:5000
+if_exists "Einblendmenü schließen" {
+    tap 50%,15%
+    wait_stable timeout:4000
+}
+if_exists "Einblendmenü schließen" {
+    swipe down distance:long
+    wait_stable timeout:3000
+}

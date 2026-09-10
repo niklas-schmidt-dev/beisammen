@@ -36,6 +36,21 @@ function requirePublicEnv(name: string): string {
   );
 }
 
+/**
+ * The scheme registered natively is the source of truth (app.config.ts derives
+ * a `-dev` variant for development builds); the env var is only a fallback.
+ */
+function readNativeScheme(): string {
+  const configured = Constants.expoConfig?.scheme;
+  const nativeScheme = Array.isArray(configured) ? configured[0] : configured;
+
+  if (typeof nativeScheme === 'string' && nativeScheme.length > 0) {
+    return nativeScheme;
+  }
+
+  return readOptionalPublicEnv('EXPO_PUBLIC_APP_SCHEME', 'beisammen');
+}
+
 function readDeploymentKind(): DeploymentKind {
   const deploymentKind = readOptionalPublicEnv('EXPO_PUBLIC_DEFAULT_DEPLOYMENT_KIND', 'cloud');
 
@@ -54,7 +69,7 @@ const defaultConvexUrl = requirePublicEnv('EXPO_PUBLIC_DEFAULT_CONVEX_URL');
 export const appEnv = {
   appEnv: readOptionalPublicEnv('EXPO_PUBLIC_APP_ENV', 'development'),
   appVersion: Constants.expoConfig?.version ?? '0.1.0',
-  appScheme: readOptionalPublicEnv('EXPO_PUBLIC_APP_SCHEME', 'beisammen'),
+  appScheme: readNativeScheme(),
   defaultInstanceId: readOptionalPublicEnv('EXPO_PUBLIC_DEFAULT_INSTANCE_ID', 'default'),
   defaultInstanceName: readOptionalPublicEnv('EXPO_PUBLIC_DEFAULT_INSTANCE_NAME', 'beisammen'),
   defaultInstanceUrl,

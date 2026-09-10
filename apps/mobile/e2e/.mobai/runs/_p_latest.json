@@ -1,0 +1,19 @@
+{
+  "caseId": "_p.mob",
+  "caseName": "t",
+  "deviceId": "00008120-000639440C13C01E",
+  "deviceName": "iPhone von Niklas",
+  "startedAt": "2026-09-09T21:33:52.909962+02:00",
+  "finishedAt": "2026-09-09T21:33:52.9101+02:00",
+  "passed": true,
+  "stepResults": [
+    {
+      "index": 0,
+      "lineNumber": 2,
+      "lineText": "checkpoint \"x\"",
+      "passed": true,
+      "startedAtMs": 1788982432910,
+      "durationMs": 0
+    }
+  ]
+}

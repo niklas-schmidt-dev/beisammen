@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useVideoPlayer, type VideoPlayer, type VideoPlayerStatus } from 'expo-video';
+import { reportAppError } from '@/features/observe/errors';
 
 import { createVideoPerfLogger } from './video-logging';
 import { isVideoProxyUrl } from './video-proxy/server';
@@ -89,6 +90,7 @@ export function useVideoPlayerSource(input: {
       })
       .catch((error: unknown) => {
         // Native players can be released during fast swipes.
+        if (!isCancelled) reportAppError('media.video_load', error);
         logger.debug('Video source load failed.', {
           assetId,
           error,
@@ -110,6 +112,7 @@ export function useVideoPlayerSource(input: {
     }
 
     const subscription = player.addListener('statusChange', ({ status, error }) => {
+      if (status === 'error') reportAppError('media.video_playback', error);
       logger.debug('Video player status changed.', {
         assetId,
         status,

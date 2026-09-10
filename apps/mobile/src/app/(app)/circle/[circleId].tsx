@@ -679,6 +679,7 @@ export default function CircleManagementScreen() {
                   <TextInput
                     value={name}
                     onChangeText={setName}
+                    accessibilityLabel={gt('Name des Circles')}
                     placeholder={gt('Name des Circles')}
                     placeholderTextColor={theme.textTertiary}
                     style={[
@@ -693,6 +694,7 @@ export default function CircleManagementScreen() {
                   <TextInput
                     value={description}
                     onChangeText={setDescription}
+                    accessibilityLabel={gt('Beschreibung')}
                     placeholder={gt('Beschreibung')}
                     placeholderTextColor={theme.textTertiary}
                     multiline
@@ -1091,6 +1093,8 @@ function MiniAction({
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [

@@ -22,7 +22,17 @@ const publicEnv = {
   EXPO_PUBLIC_LOG_LEVEL: process.env.EXPO_PUBLIC_LOG_LEVEL ?? '',
 } as const;
 
-const scheme = publicEnv.EXPO_PUBLIC_APP_SCHEME;
+// Development builds ship as a separate app ("beisammen dev", bundle id
+// app.beisammen.app.dev, scheme <scheme>-dev) so they can be installed next
+// to the App Store build on the same device, e.g. for on-device e2e runs.
+// Clerk native SSO must allowlist `<scheme>-dev://sso-callback` for dev builds.
+const isDevelopmentBuild = publicEnv.EXPO_PUBLIC_APP_ENV === 'development';
+const baseScheme = publicEnv.EXPO_PUBLIC_APP_SCHEME;
+const scheme = isDevelopmentBuild ? `${baseScheme}-dev` : baseScheme;
+const appName = isDevelopmentBuild ? 'beisammen dev' : 'beisammen';
+const iosBundleIdentifier = isDevelopmentBuild
+  ? 'app.beisammen.app.dev'
+  : 'app.beisammen.app';
 // Invite links are https://beisammen.app/connect?… so chat apps render them as
 // links. Both platforms claim that path (Universal Links / App Links) and hand
 // it to the same `connect` route the custom scheme uses. The matching
@@ -39,7 +49,7 @@ const mapsPluginConfig = {
 };
 
 const config: ExpoConfig = {
-  name: 'beisammen',
+  name: appName,
   slug: 'beisammen-mobile',
   version: '1.0.2',
   // Keep production OTA updates scoped to the native app version. Expo
@@ -59,7 +69,10 @@ const config: ExpoConfig = {
   icon: './assets/images/icon.png',
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'app.beisammen.app',
+    bundleIdentifier: iosBundleIdentifier,
+    // Local `expo run:ios --device` builds must sign with the paid team;
+    // personal teams cannot sign Associated Domains / Sign in with Apple / Push.
+    appleTeamId: '9537RR5SZS',
     associatedDomains: [`applinks:${universalLinkHost}`],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -131,6 +144,9 @@ const config: ExpoConfig = {
     // NSAllowsLocalNetworking. react-native-tcp-socket itself autolinks and
     // needs no plugin.
     './plugins/with-localhost-cleartext.js',
+    // Dev-only: lets Release-configured local device builds (on-device e2e)
+    // run with the RevenueCat Test Store key instead of crashing at launch.
+    './plugins/with-revenuecat-test-store-release.js',
     [
       'expo-location',
       {
@@ -172,7 +188,9 @@ const config: ExpoConfig = {
     reactCompiler: true,
   },
   extra: {
-    publicEnv,
+    // Expose the effective scheme so runtime code (Clerk SSO redirect) matches
+    // the native registration even for the `-dev` variant.
+    publicEnv: { ...publicEnv, EXPO_PUBLIC_APP_SCHEME: scheme },
     ...(easProjectId ? { eas: { projectId: easProjectId } } : {}),
   },
 };

@@ -1,0 +1,294 @@
+{
+  "caseId": "_probe-prelude.mob",
+  "caseName": "t",
+  "deviceId": "00008120-000639440C13C01E",
+  "deviceName": "iPhone von Niklas",
+  "startedAt": "2026-09-09T21:40:13.149522+02:00",
+  "finishedAt": "2026-09-09T21:42:31.134351+02:00",
+  "passed": false,
+  "stepResults": [
+    {
+      "index": 0,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982813149,
+      "durationMs": 8301
+    },
+    {
+      "index": 1,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982821451,
+      "durationMs": 205
+    },
+    {
+      "index": 2,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982821656,
+      "durationMs": 150
+    },
+    {
+      "index": 3,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982821806,
+      "durationMs": 143
+    },
+    {
+      "index": 4,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982821950,
+      "durationMs": 141
+    },
+    {
+      "index": 5,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982822091,
+      "durationMs": 138
+    },
+    {
+      "index": 6,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982822230,
+      "durationMs": 143
+    },
+    {
+      "index": 7,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982822373,
+      "durationMs": 140
+    },
+    {
+      "index": 8,
+      "lineNumber": 3,
+      "lineText": "run: type",
+      "passed": true,
+      "startedAtMs": 1788982822513,
+      "durationMs": 1882
+    },
+    {
+      "index": 9,
+      "lineNumber": 3,
+      "lineText": "run: tap",
+      "passed": true,
+      "startedAtMs": 1788982824437,
+      "durationMs": 796
+    },
+    {
+      "index": 10,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982825289,
+      "durationMs": 1732
+    },
+    {
+      "index": 11,
+      "lineNumber": 3,
+      "lineText": "run: scroll",
+      "passed": true,
+      "startedAtMs": 1788982827021,
+      "durationMs": 249
+    },
+    {
+      "index": 12,
+      "lineNumber": 3,
+      "lineText": "run: type",
+      "passed": true,
+      "startedAtMs": 1788982827284,
+      "durationMs": 1690
+    },
+    {
+      "index": 13,
+      "lineNumber": 3,
+      "lineText": "run: tap",
+      "passed": true,
+      "startedAtMs": 1788982829025,
+      "durationMs": 789
+    },
+    {
+      "index": 14,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982829881,
+      "durationMs": 1710
+    },
+    {
+      "index": 15,
+      "lineNumber": 3,
+      "lineText": "run: scroll",
+      "passed": true,
+      "startedAtMs": 1788982831592,
+      "durationMs": 271
+    },
+    {
+      "index": 16,
+      "lineNumber": 3,
+      "lineText": "run: tap",
+      "passed": true,
+      "startedAtMs": 1788982831883,
+      "durationMs": 628
+    },
+    {
+      "index": 17,
+      "lineNumber": 3,
+      "lineText": "run: repeat",
+      "passed": true,
+      "startedAtMs": 1788982832560,
+      "durationMs": 880
+    },
+    {
+      "index": 18,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982833441,
+      "durationMs": 4147
+    },
+    {
+      "index": 19,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982837589,
+      "durationMs": 363
+    },
+    {
+      "index": 20,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982837953,
+      "durationMs": 230
+    },
+    {
+      "index": 21,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982838183,
+      "durationMs": 5214
+    },
+    {
+      "index": 22,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982843398,
+      "durationMs": 4264
+    },
+    {
+      "index": 23,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982847663,
+      "durationMs": 10052
+    },
+    {
+      "index": 24,
+      "lineNumber": 3,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982857715,
+      "durationMs": 286
+    },
+    {
+      "index": 25,
+      "lineNumber": 3,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982858002,
+      "durationMs": 5179
+    },
+    {
+      "index": 26,
+      "lineNumber": 4,
+      "lineText": "checkpoint \"first\"",
+      "passed": true,
+      "startedAtMs": 1788982863181,
+      "durationMs": 0
+    },
+    {
+      "index": 27,
+      "lineNumber": 5,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982863181,
+      "durationMs": 8300
+    },
+    {
+      "index": 28,
+      "lineNumber": 5,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982871482,
+      "durationMs": 279
+    },
+    {
+      "index": 29,
+      "lineNumber": 5,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982871762,
+      "durationMs": 188
+    },
+    {
+      "index": 30,
+      "lineNumber": 5,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982871950,
+      "durationMs": 195
+    },
+    {
+      "index": 31,
+      "lineNumber": 5,
+      "lineText": "run: wait_for",
+      "passed": true,
+      "startedAtMs": 1788982872146,
+      "durationMs": 45246,
+      "error": "element not found within timeout: \"E-Mail-Adresse\""
+    },
+    {
+      "index": 32,
+      "lineNumber": 5,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982917586,
+      "durationMs": 204
+    },
+    {
+      "index": 33,
+      "lineNumber": 5,
+      "lineText": "run: if_exists",
+      "passed": true,
+      "startedAtMs": 1788982917791,
+      "durationMs": 3109
+    },
+    {
+      "index": 34,
+      "lineNumber": 5,
+      "lineText": "run: wait_for",
+      "passed": false,
+      "startedAtMs": 1788982920900,
+      "durationMs": 30137,
+      "error": "element not found within timeout: \"E-Mail-Adresse\""
+    }
+  ],
+  "error": "step 34 (line 5): element not found within timeout: \"E-Mail-Adresse\""
+}

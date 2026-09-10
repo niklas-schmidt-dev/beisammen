@@ -1,0 +1,47 @@
+# Sign out via Einstellungen › Konto › Abmelden. Must start on a tab screen
+# (circle detail and share detail hide the tab bar).
+# Sign-out clears the Clerk session first and re-renders afterwards; the UI
+# occasionally hangs on the old screen, so fall back to a relaunch which then
+# lands on the sign-in screen.
+# Param: app = app.beisammen.app.dev
+# Param: scheme = beisammen-dev
+tap ~"Einstellungen, tab"
+wait_for "Konto öffnen" timeout:10000
+tap "Konto öffnen"
+wait_for "Abmelden" timeout:10000
+scroll down to "Abmelden" max_scrolls:5
+tap "Abmelden" type:button
+wait_for "E-Mail-Adresse" timeout:45000 on_fail:skip
+if_exists "E-Mail-Adresse" {
+    wait_stable timeout:3000
+} else {
+    kill_app "${app}"
+    delay 2000
+    app "${app}"
+    wait_stable timeout:15000
+    assert_exists type:button timeout:30000
+    # Session still alive (sign-out hung before Clerk cleared it)? Retry once.
+    if_exists "E-Mail-Adresse" {
+        wait_stable timeout:2000
+    } else {
+        if_exists "Ich habe den Code gesichert" {
+            tap "Ich habe den Code gesichert"
+            wait_stable timeout:5000
+        }
+        open_link "${scheme}://settings/account"
+        wait_stable timeout:8000
+        wait_for "Abmelden" timeout:20000
+        scroll down to "Abmelden" max_scrolls:5
+        tap "Abmelden" type:button
+        wait_for "E-Mail-Adresse" timeout:45000 on_fail:skip
+        if_exists "E-Mail-Adresse" {
+            wait_stable timeout:2000
+        } else {
+            kill_app "${app}"
+            delay 2000
+            app "${app}"
+            wait_stable timeout:15000
+            wait_for "E-Mail-Adresse" timeout:30000
+        }
+    }
+}

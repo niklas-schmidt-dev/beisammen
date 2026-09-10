@@ -86,6 +86,7 @@ export function useLivePhotoPlayback(input: {
         }
       })
       .catch((error: unknown) => {
+        if (isCancelled) return;
         // Native players can be released during fast swipes; a real load
         // failure surfaces here instead of silently disabling the hold.
         logger.warn('Live Photo clip failed to load into the player.', {

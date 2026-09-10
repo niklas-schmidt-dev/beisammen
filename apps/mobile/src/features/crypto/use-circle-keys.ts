@@ -145,7 +145,7 @@ export function useCircleKeys(circleId: string | null | undefined): CircleKeysSt
         if (!cancelled) {
           logger.warn('Failed to resolve circle key.', {
             circleId,
-            message: error instanceof Error ? error.message : String(error),
+            error,
           });
           setState({ status: 'loading' });
         }
