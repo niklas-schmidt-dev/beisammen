@@ -244,7 +244,7 @@ class AppLogger implements Logger {
     context?: LogContext,
   ) {
     if (level === 'warn' || level === 'error') {
-      reportLoggedError(this.namespace, message, context?.error ?? this.baseContext.error);
+      reportLoggedError(this.namespace, message, { ...this.baseContext, ...context });
     }
     if (!shouldLog(level)) {
       return;

@@ -6,3 +6,5 @@ onlyBuiltDependencies:
   - '@shopify/react-native-skia'
   - esbuild
   - react-native-libsodium
+patchedDependencies:
+  expo-image-picker@57.0.10: patches/expo-image-picker@57.0.10.patch

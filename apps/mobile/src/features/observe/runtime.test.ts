@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { buildClerkInstanceConfig } from '@beisammen/contracts';
 
 const native = vi.hoisted(() => ({
-  configure: vi.fn(), reportError: vi.fn(), reportGlobal: vi.fn(), dispatchEvents: vi.fn(),
+  configure: vi.fn(), reportError: vi.fn(), reportGlobal: vi.fn(), dispatchEvents: vi.fn(), logEvent: vi.fn(),
   getItem: vi.fn(), setItem: vi.fn(),
 }));
 vi.mock('expo-observe', () => ({
-  Observe: { configure: native.configure, reportError: native.reportError, dispatchEvents: native.dispatchEvents },
+  Observe: {
+    configure: native.configure, reportError: native.reportError, dispatchEvents: native.dispatchEvents,
+    logEvent: native.logEvent,
+  },
   AppMetrics: { reportError: native.reportGlobal },
 }));
 vi.mock('expo-secure-store', () => ({ getItem: native.getItem, setItem: native.setItem }));
@@ -35,8 +38,16 @@ describe('Observe runtime', () => {
     expect(native.reportError).not.toHaveBeenCalled();
     expect(native.configure).toHaveBeenLastCalledWith(expect.objectContaining({ dispatchingEnabled: false }));
     await app.setObserveInstance(true);
-    app.reportAppError('media.upload', new Error('secret'));
-    expect(native.reportError).toHaveBeenCalledWith(expect.objectContaining({ message: 'media.upload' }));
+    app.reportAppError('media.upload', new Error('secret'), { stage: 'put' });
+    expect(native.reportError).toHaveBeenCalledWith(expect.objectContaining({ message: 'media.upload (stage=put)' }));
+    expect(native.logEvent).toHaveBeenCalledWith('app.error', {
+      body: 'media.upload (stage=put)',
+      attributes: { operation: 'media.upload', stage: 'put' },
+      severity: 'error',
+    });
+    native.logEvent.mockImplementation(() => { throw new Error('native unavailable'); });
+    expect(() => app.reportAppError('media.upload', new Error('secret'), { stage: 'complete' })).not.toThrow();
+    expect(native.reportError).toHaveBeenCalledTimes(2);
     expect(native.configure).toHaveBeenLastCalledWith(expect.objectContaining({
       dispatchingEnabled: true, dispatchInDebug: false, sampleRate: 1,
       integrations: { 'expo-router': { filteredParams: expect.arrayContaining(['instance', 'invite', 'circleId']) } },

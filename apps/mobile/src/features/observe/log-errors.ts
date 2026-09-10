@@ -1,4 +1,4 @@
-import { reportAppError, type ErrorOperation } from './errors';
+import { type ErrorContext, type ErrorOperation, reportAppError, sanitizeContext } from './errors';
 
 // Exact matches only. Logger context and message strings are never forwarded.
 // Expected authentication/validation failures and ordinary warnings stay local.
@@ -32,7 +32,15 @@ const OPERATIONS = new Map<string, ErrorOperation>([
   ['home:Draft publish failed', 'share.publish'],
 ]);
 
-export function reportLoggedError(namespace: string, message: string, error: unknown): void {
+/**
+ * Only the `error` value and the fixed machine-token keys of the log context
+ * (`stage`, `kind`, counters) reach Observe; file names, ids and messages stay local.
+ */
+export function reportLoggedError(
+  namespace: string,
+  message: string,
+  context: Record<string, unknown> | undefined,
+): void {
   const operation = OPERATIONS.get(`${namespace}:${message}`);
-  if (operation) reportAppError(operation, error);
+  if (operation) reportAppError(operation, context?.error, sanitizeContext(context as ErrorContext));
 }

@@ -2,7 +2,12 @@ import { AppMetrics, Observe, type ObserveConfig } from 'expo-observe';
 import * as SecureStore from 'expo-secure-store';
 import type { InstanceConfig } from '@beisammen/contracts';
 
-import { createErrorReporter, sanitizeError, setErrorReportSink } from './errors';
+import {
+  createErrorReporter,
+  type ErrorAttributes,
+  sanitizeError,
+  setErrorReportSink,
+} from './errors';
 
 const PURGE_KEY = 'beisammen.observe.purge';
 const buildEnvironment = process.env.EXPO_PUBLIC_APP_ENV;
@@ -39,7 +44,7 @@ export function isDefaultCloudInstance(instance: InstanceConfig, defaultInstance
 
 /** Called by index.js before loading Expo Router or application modules. */
 export function initializeObserve(previousHandler?: GlobalErrorHandler): void {
-  // SDK 57.0.13 has no beforeSend/errorHandlingEnabled option. Replace its
+  // SDK 57.0.20 has no beforeSend/errorHandlingEnabled option. Replace its
   // auto-installed handler with sanitized capture, then call the original RN
   // handler with the ORIGINAL error so RedBox and fatal termination still work.
   // Keep this SDK-dependent adapter isolated; verify it on Observe upgrades.
@@ -63,13 +68,28 @@ export function initializeObserve(previousHandler?: GlobalErrorHandler): void {
   try {
     Observe.configure({ ...config, dispatchingEnabled: false });
   } catch { /* Leave manual reporting disabled if native configuration fails. */ }
-  const handled = createErrorReporter((error) => Observe.reportError(error), () => enabled);
+  const handled = createErrorReporter(sendHandledError, () => enabled);
   // Root providers can fail before instance restoration. Retain that sanitized
   // error locally, like unhandled errors, for a subsequent eligible dispatch.
-  const render = createErrorReporter((error) => Observe.reportError(error), () => !__DEV__);
-  setErrorReportSink((operation, error) => {
-    (operation === 'app.render' ? render : handled)(operation, error);
+  const render = createErrorReporter(sendHandledError, () => !__DEV__);
+  setErrorReportSink((operation, error, context) => {
+    (operation === 'app.render' ? render : handled)(operation, error, context);
   });
+}
+
+/**
+ * Every handled failure produces two records: the `exception` event (stack
+ * trace, symbolicated in the dashboard) and an `app.error` log event whose
+ * attributes (operation, stage, kind, native/HTTP code) are filterable with
+ * `eas observe:events app.error` — the exception body is not exposed there.
+ */
+function sendHandledError(error: Error, attributes: ErrorAttributes): void {
+  Observe.reportError(error);
+  try {
+    Observe.logEvent('app.error', { body: error.message, attributes, severity: 'error' });
+  } catch {
+    // The exception record above is the primary signal; the log event is best effort.
+  }
 }
 
 /**

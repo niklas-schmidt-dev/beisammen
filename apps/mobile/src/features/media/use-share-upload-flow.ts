@@ -56,6 +56,22 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 /**
+ * Pipeline step of a single asset. Reported (without any file details) with
+ * a failure so Observe shows where uploads break: preparing/compressing,
+ * previewing, encrypting, requesting the target, the S3 PUTs or completion.
+ */
+export type UploadStage =
+  | 'prepare'
+  | 'size'
+  | 'preview'
+  | 'encrypt'
+  | 'target'
+  | 'put'
+  | 'put_preview'
+  | 'put_paired_video'
+  | 'complete';
+
+/**
  * The server refuses to discard uploads that already produced an asset. When a
  * locally failed or recovered queue item hits this, the upload actually
  * succeeded and the queue entry is stale — it is safe to drop locally, since
@@ -232,7 +248,11 @@ export function useShareUploadFlow({
       encryptedPreviewCacheUri?: string;
       encryptedPairedVideoCacheUri?: string;
       encryption?: UploadEncryptionEnvelope;
+      onStage?: (stage: UploadStage) => void;
     }) => {
+      const stage = (next: UploadStage) => input.onStage?.(next);
+
+      stage('size');
       assertPreparedUploadAssetMimeTypeSupported(input.preparedAsset);
 
       // The exact byte sizes are declared to the server and signed into the
@@ -247,6 +267,7 @@ export function useShareUploadFlow({
       // Generate (or on retry: reuse) the compressed preview before the
       // target request. Retries must upload the identical preview file, since
       // the server re-signs the PUT for the originally declared size.
+      stage('preview');
       const previewAsset = await resolveUploadPreview({
         previewCacheUri: input.previewCacheUri,
         sourceUri: input.preparedAsset.previewUri,
@@ -262,6 +283,7 @@ export function useShareUploadFlow({
       // Encrypt before the target request: the declared (and signed) sizes
       // are ciphertext sizes. The ciphertext lives next to the recovery
       // files so retries re-upload it byte-identically.
+      stage('encrypt');
       const encryptionTargets = await prepareUploadEncryptionTargets({
         instanceUrl,
         shareBatchId: input.shareBatchId,
@@ -324,6 +346,7 @@ export function useShareUploadFlow({
         }),
       );
 
+      stage('target');
       const prepared = input.uploadId
         ? await retryUpload({ uploadId: input.uploadId })
         : await createTarget({
@@ -355,6 +378,7 @@ export function useShareUploadFlow({
       );
       setUploadQueue((state) => markUploadStatus(state, input.queueId, 'uploading'));
 
+      stage('put');
       const uploaded = await uploadPreparedFile({
         target: prepared.target,
         asset: {
@@ -371,6 +395,7 @@ export function useShareUploadFlow({
       } = {};
 
       if (prepared.previewTarget) {
+        stage('put_preview');
         const uploadedPreview = await uploadPreparedFile({
           target: prepared.previewTarget,
           asset: {
@@ -393,6 +418,7 @@ export function useShareUploadFlow({
       } = {};
 
       if (prepared.pairedVideoTarget && encrypted.encryptedPairedVideoUri !== undefined) {
+        stage('put_paired_video');
         const uploadedPairedVideo = await uploadPreparedFile({
           target: prepared.pairedVideoTarget,
           asset: {
@@ -410,6 +436,7 @@ export function useShareUploadFlow({
 
       // No plaintext location: the server rejects it next to `encryption`.
       // Name and location live in the envelope's encMetadata instead.
+      stage('complete');
       await completeUpload({
         uploadId: prepared.uploadId,
         objectKey: uploaded.objectKey,
@@ -480,14 +507,27 @@ export function useShareUploadFlow({
         exif: true,
         quality: 1,
         selectionLimit: 0,
+        // iOS: assets offloaded to iCloud ("Optimize iPhone Storage") must be
+        // fetched before they can be read. Without this, one such Live Photo
+        // or video rejects the whole selection with PHPhotosErrorDomain 3164.
+        // Needs patches/expo-image-picker (upstream #48794) for Live Photos.
+        shouldDownloadFromNetwork: true,
       });
     } catch (error) {
       // A picker that fails to launch (missing activity, OS-level error) must
       // surface as feedback; the caller discards the promise, so an unhandled
       // rejection would leave the button looking dead.
-      logger.error('Media picker failed to open', { circleId: selectedCircle._id, error });
+      // The native picker rejects for the whole selection (e.g. an iCloud
+      // asset it could not download, PHPhotosErrorDomain 3164). The error
+      // code and domain reach Observe; the message stays on the device.
+      logger.error('Media picker failed to open', {
+        circleId: selectedCircle._id,
+        stage: 'picker',
+        error,
+      });
       recordClientDiagnostic('upload', 'Media picker failed to open', {
         circleId: selectedCircle._id,
+        stage: 'picker',
         error,
       });
       onFeedback(errorMessage(error, gt('Die Mediathek konnte nicht geöffnet werden.')));
@@ -498,10 +538,15 @@ export function useShareUploadFlow({
 
     onFeedback(null);
     setIsUploading(true);
+    // Which step of the batch failed; reported alongside the error so a
+    // selection of many assets can be diagnosed without the file names.
+    let stage: 'draft' | 'metadata' | 'items' = 'draft';
 
     try {
       const draft = await getOrCreateDraft({ circleId: selectedCircle._id });
+      stage = 'metadata';
       const resolvedMetadata = await resolvePickerAssetMetadata(result.assets, m);
+      stage = 'items';
 
       let successCount = 0;
 
@@ -607,6 +652,8 @@ export function useShareUploadFlow({
           }),
         );
 
+        let itemStage: UploadStage = 'prepare';
+
         try {
           const preparedAsset = await optimizePickerAsset(uploadAsset, resolvedLocation, capturedAt);
 
@@ -640,6 +687,9 @@ export function useShareUploadFlow({
             preparedAsset,
             ...(cacheUri ? { cacheUri } : {}),
             ...(pairedVideoCacheUri ? { pairedVideoCacheUri } : {}),
+            onStage: (next) => {
+              itemStage = next;
+            },
           });
 
           successCount += 1;
@@ -651,6 +701,10 @@ export function useShareUploadFlow({
             circleId: selectedCircle._id,
             shareBatchId: draft.shareBatchId,
             fileName,
+            stage: itemStage,
+            kind,
+            index,
+            count: result.assets.length,
             errorMessage: message,
             error,
           });
@@ -659,6 +713,10 @@ export function useShareUploadFlow({
             circleId: selectedCircle._id,
             shareBatchId: draft.shareBatchId,
             fileName,
+            stage: itemStage,
+            kind,
+            index,
+            count: result.assets.length,
             errorMessage: message,
             error,
           });
@@ -681,10 +739,14 @@ export function useShareUploadFlow({
     } catch (error) {
       logger.error('Media selection upload failed', {
         circleId: selectedCircle._id,
+        stage,
+        count: result.assets.length,
         error,
       });
       recordClientDiagnostic('upload', 'Media selection upload failed', {
         circleId: selectedCircle._id,
+        stage,
+        count: result.assets.length,
         error,
       });
       onFeedback(errorMessage(error, gt('Medien konnten nicht hinzugefügt werden.')));
@@ -712,6 +774,7 @@ export function useShareUploadFlow({
       onFeedback(null);
       setIsUploading(true);
       setUploadQueue((state) => markUploadStatus(state, itemId, 'processing'));
+      let stage: UploadStage = 'prepare';
 
       try {
         let preparedAsset: PreparedUploadAsset;
@@ -761,6 +824,9 @@ export function useShareUploadFlow({
           encryptedPreviewCacheUri: queueItem.encryptedPreviewCacheUri,
           encryptedPairedVideoCacheUri: queueItem.encryptedPairedVideoCacheUri,
           encryption: queueItem.encryption,
+          onStage: (next) => {
+            stage = next;
+          },
         });
 
         setUploadQueue((state) => removeUploadQueueItems(state, (item) => item.id === itemId));
@@ -772,6 +838,9 @@ export function useShareUploadFlow({
           circleId: queueItem.circleId,
           shareBatchId: queueItem.shareBatchId,
           fileName: queueItem.fileName,
+          stage,
+          kind: queueItem.kind,
+          attempt: queueItem.attempts,
           error,
         });
         recordClientDiagnostic('upload', 'Upload retry failed', {
@@ -779,6 +848,9 @@ export function useShareUploadFlow({
           circleId: queueItem.circleId,
           shareBatchId: queueItem.shareBatchId,
           fileName: queueItem.fileName,
+          stage,
+          kind: queueItem.kind,
+          attempt: queueItem.attempts,
           error,
         });
         setUploadQueue((state) => markUploadStatus(state, itemId, 'failed', message));
