@@ -51,7 +51,7 @@ const mapsPluginConfig = {
 const config: ExpoConfig = {
   name: appName,
   slug: 'beisammen-mobile',
-  version: '1.0.2',
+  version: '1.1.0',
   // Keep production OTA updates scoped to the native app version. Expo
   // recommends this stable policy for EAS Update; fingerprint runtimes are
   // still experimental and can differ between local and clean EAS installs.
@@ -131,7 +131,17 @@ const config: ExpoConfig = {
         },
       },
     ],
-    'expo-notifications',
+    [
+      // Android status-bar icon must be a white-on-transparent glyph (the
+      // system tints it); `color` is the accent used for the icon background
+      // and channel light. iOS ignores both.
+      'expo-notifications',
+      {
+        icon: './assets/images/notification-icon.png',
+        color: '#1B6B45',
+        defaultChannel: 'shares',
+      },
+    ],
     'expo-router',
     'expo-secure-store',
     'expo-sharing',

@@ -41,11 +41,13 @@
     "i": 1,
     "t": "Text"
   },
+  "016a3612fe948010": "Comments and reactions",
   "01fc8f6fa3aa08ee": "Export failed. Please try again.",
   "022a220bff2fd4a6": "Remove",
   "039572b9c58367f8": "Make Owner",
   "04014fdf93668bd7": "Show more",
   "0405844921b42473": "Transfer Ownership to {name}.",
+  "04a1fe1f212a3652": "When someone reacts to your posts with an emoji.",
   "04a3ef4dbcadcc28": {
     "c": "Shared moments for the people who matter.",
     "i": 1,
@@ -56,6 +58,8 @@
     "i": 1,
     "t": "Text"
   },
+  "05369b8fc147a389": "Please check your entries.",
+  "0585abe48ff5416f": "Circle members",
   "058a4fb8ba5fab49": "Check storage",
   "06002df497e9c37a": "Checking...",
   "0723615833246645": {
@@ -88,6 +92,7 @@
       "t": "Text"
     }
   ],
+  "0bb54ce03dc590f7": "Photos and videos shared in your Circles.",
   "0c2ef13b071c625e": "Encryption unavailable",
   "0d493a71491198e6": "Your profile picture will be removed.",
   "0e1799c39336f1f8": "Purchase complete. Your plan is active.",
@@ -110,6 +115,7 @@
   },
   "1681365fb984c8c9": "Member",
   "16e06311ba0e41ca": "Without access to your media library, you can't select photos or videos.",
+  "16ff00e43691eb71": "The code has expired. Request a new one.",
   "17f93700f8f4185d": "Recovery code",
   "183588a277913c4b": {
     "c": "Resend code",
@@ -138,6 +144,7 @@
   "1e7b9dfaac59831e": "Interrupted upload removed.",
   "1e8626cdba7b19c6": "Waiting",
   "1e8ae01006afbd56": "The media has been saved to your device.",
+  "1ee38f16795b71be": "The password is incorrect.",
   "1ef59bfe626a5ba4": "Back",
   "1fb0f77f14cd0fc1": "Could not delete Circle.",
   "1feaf77de5302373": [
@@ -148,6 +155,7 @@
       "t": "Text"
     }
   ],
+  "222d091d7c14806e": "New members",
   "22755e52159dac76": "Upload readiness is still being checked. Please try again shortly.",
   "23f59bef7720cc4f": {
     "c": "Check that the link is complete, or ask for a new invitation.",
@@ -183,6 +191,7 @@
   },
   "270a0dc9b1b8d598": "Could not read clipboard.",
   "27dad249fed6c222": "More",
+  "283612a9fc317c0b": "Replies and reactions to posts.",
   "28acc3d94b2ca73e": "Close input",
   "2b0d350fc56ba187": "Delete Circle",
   "2b73806be5e7ebbc": "Invitation for {email} was revoked.",
@@ -231,6 +240,8 @@
   "34e479e1e916fae4": "Join Circle",
   "34ee832db0757026": "Delete account",
   "353d28df4ccf0ed8": "Manage, join, or create a new Circle",
+  "3555615edeebebda": "No account was found for this email address.",
+  "35a1059d9f5960d9": "The password is too weak. Please choose a longer password.",
   "35a43a3525780782": "Create invitation link",
   "35bf3eb589947717": {
     "c": {
@@ -270,6 +281,7 @@
     "t": "Text"
   },
   "35f8ebb715bc1157": "No activity",
+  "361ea797c73e37b6": "The password must be at least {count} characters long.",
   "365cd7707e66a55a": "Access restored.",
   "376fdc6e590c6d48": "Type",
   "3840055deac2caea": "Open settings",
@@ -407,6 +419,7 @@
   "4c5833d908d513a4": "{count, plural, one {# person} other {# people}}",
   "4cb9a01453ccea45": "Edit draft",
   "4d3129d08c8c8c01": "Restore your encryption on this device using your recovery code before uploading media.",
+  "4d36b097d6214c6a": "Too many attempts. Please wait a moment and try again.",
   "4e0f8855bb4745ec": "Email address",
   "500c6839cd8f308d": "Address",
   "5049f810095ae756": "Open account",
@@ -562,6 +575,7 @@
   "62968035b2645633": "No description provided.",
   "62ca70a806ebab11": "Personal email link",
   "63260ad1d67d492c": "React with a custom emoji",
+  "63cd4dede80dd49a": "The code is incorrect.",
   "64072531c749fee5": "Revoke invitation?",
   "641a9be9baaf4442": {
     "c": "No new activity yet.",
@@ -589,6 +603,7 @@
     "i": 1,
     "t": "Text"
   },
+  "6e553b1010bf5b15": "No connection. Check your internet connection and try again.",
   "6e9cc51ada5c84d7": "You're already a member",
   "6ec405d1b5e604a7": "This link could not be processed.",
   "6f26d8c762058086": "No email address in profile",
@@ -660,6 +675,7 @@
     "i": 1,
     "t": "Text"
   },
+  "7691f4bc816b7e65": "You can't register with this email address.",
   "76e6c0d3c2808561": [
     {
       "c": "last link",
@@ -706,6 +722,7 @@
     "i": 1,
     "t": "Text"
   },
+  "7c4b5316e40c08ec": "Please enter a valid email address.",
   "7ccc922fd2ef254e": "Resets on {date}",
   "7cd54b4af08a62d4": "The post and all media items will be permanently deleted.",
   "7cf5c09789663c49": "Billing unavailable",
@@ -786,6 +803,7 @@
     "i": 1,
     "t": "Text"
   },
+  "862303f37dbb883e": "This password has been found in a data breach. Please choose a different one.",
   "8721046acd5bcd31": [
     {
       "c": "Encryption",
@@ -809,12 +827,15 @@
   },
   "887fbba666ea8701": "Couldn't remove Circle picture.",
   "889ac4c59ce34610": "Invited",
+  "88df5d23d06c9e10": "The password is too short.",
   "89be0a7399a0be31": "Download update",
   "8ad13c6df3df248d": "Connected to {name}.",
+  "8bcf89792bc7aefe": "When someone accepts an invitation to one of your Circles.",
   "8c0c0d9aa942415c": "Choose an active Cloud plan before uploading media items.",
   "8cffa7e07e7a0961": "Sign-in failed.",
   "8d3486ac3beed254": "Photo {position}",
   "8dc911190e3a4049": "The draft and all uploaded media items will be permanently removed.",
+  "8ebd291338a249bf": "When someone joins one of your Circles.",
   "8f286c593f75cbd1": {
     "c": "Sign in with Google",
     "i": 1,
@@ -837,6 +858,7 @@
   "90e603698a180b14": "Sign in to open your Circle invitation.",
   "9123c51354900e89": "Family, vacation, partner",
   "91c55a84e7182385": "Activity could not be marked as read.",
+  "9210ebcc24768abe": "An account already exists for this email address. Please sign in.",
   "9265c8d4b4ecfb4b": "\"{name}\" and all posts, comments, reactions, and media—including content from all other members—will be permanently deleted. This cannot be undone.",
   "929d56ba4324ea6f": "Your upload permission couldn't be checked right now. Please try again in a moment.",
   "9387012f02c26adf": [
@@ -899,7 +921,6 @@
   },
   "9c2d2a1d59d74d67": "Open {displayText} post",
   "9ca1900419b0c005": "Photos",
-  "9ca4094fb14fed77": "When someone reacts to shared memories with an emoji.",
   "9cfb7a9dc7c5351c": {
     "c": "No media items",
     "i": 1,
@@ -925,6 +946,7 @@
       "t": "Text"
     }
   ],
+  "a0f22bca3d3a857a": "The password is too long.",
   "a13a44f97ded489b": "Post was deleted.",
   "a258e0bf86717aee": "Post could not be published.",
   "a25f9f392a6cee49": "Save",
@@ -962,6 +984,7 @@
     }
   ],
   "a5fbc7f165eb5977": "Could not remove comment.",
+  "a63e1b2c4a577f8a": "Post text",
   "a6d2d6b25d4b2153": "Sign in",
   "a73fb7a8c649654e": "Instance backend address",
   "a8266ae7f10c4f09": "Map",
@@ -970,6 +993,7 @@
   "aa0c735420dac872": "Full post",
   "aad0c7cb3140ab7e": "Couldn't change push notification settings.",
   "ab8daa10ce5b9b2f": "Sign in with {email} to accept this invitation.",
+  "abc14469b6f9263d": "Please fill in all fields.",
   "ae1faa567c5599ef": "Circle limit reached",
   "af0c8525da17e580": "Password",
   "b0e4acdc4732e525": "Send comment",
@@ -1071,6 +1095,7 @@
   "cbd9ee79d79faec3": "Circle hasn't loaded yet.",
   "cbeeb66e1b3c97f9": "Media items could not be added.",
   "cc885d77a509a58d": "We couldn't check whether you can create a Circle right now. Please try again shortly.",
+  "ccfccf68b9c82f1c": "Your account is temporarily locked. Please try again later.",
   "cd930a3b354d3d62": "Reset failed. Please try again.",
   "ceec6c8ca514eaae": "Remove Circle picture?",
   "cf5a0d8099ba2979": "Continue",
@@ -1160,6 +1185,7 @@
   "e381376035d47da4": "Join \"{name}\"",
   "e4f61f2b3d31e88c": "Go to Home",
   "e648b842b980d86c": "Select a Circle to view the feed.",
+  "e668f9cc3c38ba18": "You are already signed in.",
   "e67375e3f703380e": "Self-hosted",
   "e70120e779260b40": {
     "c": "you",
@@ -1197,6 +1223,7 @@
   "f010bcf18a650ca3": "Could not share invitation link.",
   "f019f1eee605f644": "Some media items don't contain GPS data. Would you like to use your current location once to add a location to these media items?",
   "f04872e83eb71278": "Encryption could not be set up on this device. Please try again.",
+  "f10bee3b9b05d39b": "Confirmation failed. Request a new code.",
   "f2255a27ff7dd8cd": "Enter the code from your email.",
   "f2434d74293e3aab": "Danger zone",
   "f29cb82c8f3f6703": "Secure access to encrypted photos",
@@ -1239,6 +1266,7 @@
   "f97ae7b230a59c2c": "Write about this media…",
   "fa086722dce737e5": "Draft was deleted.",
   "faa142b2115eb0a1": "Role",
+  "fb38bd2eae8bb500": "Password sign-in is not available for this account. Use Google or Apple.",
   "fb50163bfa307007": "Start with a close-knit group, then share photos or videos only with those people.",
   "fbf6911eaf234fc0": {
     "c": "Lost your code? As a last resort, you can reset your encryption. You'll then receive a new code and automatically regain access to shared photos.",

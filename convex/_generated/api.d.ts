@@ -32,6 +32,7 @@ import type * as lib_engagement from "../lib/engagement.js";
 import type * as lib_expoPush from "../lib/expoPush.js";
 import type * as lib_httpHelpers from "../lib/httpHelpers.js";
 import type * as lib_instance from "../lib/instance.js";
+import type * as lib_inviteLinks from "../lib/inviteLinks.js";
 import type * as lib_notifications from "../lib/notifications.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_shareAssets from "../lib/shareAssets.js";
@@ -82,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   "lib/expoPush": typeof lib_expoPush;
   "lib/httpHelpers": typeof lib_httpHelpers;
   "lib/instance": typeof lib_instance;
+  "lib/inviteLinks": typeof lib_inviteLinks;
   "lib/notifications": typeof lib_notifications;
   "lib/permissions": typeof lib_permissions;
   "lib/shareAssets": typeof lib_shareAssets;

@@ -63,6 +63,8 @@ function activityText(input: {
       return input.assetId
         ? `${input.actorName} hat auf ein Medium reagiert.`
         : `${input.actorName} hat auf einen Beitrag reagiert.`;
+    case 'member.joined':
+      return `${input.actorName} ist dem Circle beigetreten.`;
     default:
       return `${input.actorName} war aktiv.`;
   }
@@ -101,7 +103,11 @@ async function mapActivityEvent(ctx: QueryCtx, event: ActivityEvent) {
   ]);
   const name = actorName(actor);
   const assetId = event.assetId ?? null;
-  const shareBatchId = event.shareBatchId ?? (event.entityId as Id<'shareBatches'>);
+  // Legacy rows stored the share id only in entityId; circle-level events
+  // (member.joined) have no share at all.
+  const shareBatchId =
+    event.shareBatchId ??
+    (event.entityId === event.circleId ? null : (event.entityId as Id<'shareBatches'>));
 
   return {
     _id: event._id,
@@ -146,7 +152,7 @@ async function mapActivityInboxItem(ctx: QueryCtx, item: ActivityInboxItem) {
     actorHasProfileImage: Boolean(actor?.profileImageStorage),
     actorProfileImageKey: imageCacheKey(actor?.profileImageStorage),
     type: item.type,
-    shareBatchId: item.shareBatchId,
+    shareBatchId: item.shareBatchId ?? null,
     assetId,
     status: item.status,
     readAt: item.readAt ?? null,

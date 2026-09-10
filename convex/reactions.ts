@@ -72,6 +72,9 @@ export const set = mutation({
           shareBatchId: target.shareBatch._id,
           ...(target.assetId ? { assetId: target.assetId } : {}),
           reactionId: existing[0]._id,
+          // Reactions only interrupt the share's author; everyone else sees
+          // them in the activity history without a push.
+          pushRecipientIds: [target.shareBatch.authorId],
           createdAt: now,
         });
       }
@@ -100,6 +103,7 @@ export const set = mutation({
       shareBatchId: target.shareBatch._id,
       ...(target.assetId ? { assetId: target.assetId } : {}),
       reactionId,
+      pushRecipientIds: [target.shareBatch.authorId],
       createdAt: now,
     });
 

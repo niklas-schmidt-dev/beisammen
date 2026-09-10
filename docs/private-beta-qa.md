@@ -47,9 +47,10 @@ application and an S3-compatible bucket (AWS S3, R2, B2 S3, or MinIO).
 - Start every manual pass from the JSON summary emitted by `pnpm release:beta`.
   Confirm `app-version`, `typecheck`, `tests`, cloud smoke, and self-hosted
   smoke checks are present and passing before device QA begins.
-- Push delivery is intentionally skipped until `EXPO_PUSH_ACCESS_TOKEN` and the
-  platform credentials are configured; skipped delivery rows should still be
-  visible in Convex for inspection.
+- Push delivery is intentionally skipped until `EXPO_PUSH_ACCESS_TOKEN` (or
+  `EXPO_PUSH_ENABLED=true`) and the platform credentials are configured;
+  skipped delivery rows should still be visible in Convex for inspection.
+  See [docs/push-notifications.md](push-notifications.md).
 
 ## Cloud Golden Path
 
@@ -105,6 +106,18 @@ application and an S3-compatible bucket (AWS S3, R2, B2 S3, or MinIO).
   provider credentials are missing, confirm attempts are skipped with
   `provider_not_configured`; once credentials are present, confirm notification
   taps open share detail and preserve `assetId` focus when present.
+- Confirm a reaction only pushes the share author (other members see it in
+  the activity tab without a push) and that repeated reactions on the same
+  medium replace the previous notification instead of stacking.
+- Accept an invite from a second account and confirm existing members get a
+  "… ist beigetreten" push whose tap opens the circle screen.
+- On Android, open the system notification settings for the app and confirm
+  three channels (Neue Beiträge, Kommentare und Reaktionen, Circle-Mitglieder)
+  exist and the status-bar icon is the brand glyph, not a white square.
+- On iOS, confirm the app icon badge equals the unread count in the activity
+  tab and drops to zero after reading everything there.
+- Switch the device UI language to English, relaunch, and confirm the next
+  push arrives in English.
 - Delete a draft asset, delete a published share, remove a member, and confirm counts update.
 - After deleting a published share, confirm its comments, reactions, and
   activity and inbox rows no longer appear.

@@ -4,6 +4,7 @@ import type { Doc } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
 import { adjustCircleStats } from './circleStats';
+import { createActivityEventWithInbox } from './lib/activity';
 import { readBaseUrl } from './lib/httpHelpers';
 import { buildInviteLink } from './lib/inviteLinks';
 import { isManageRole, requireCircleMembership, requireViewer } from './lib/viewer';
@@ -294,6 +295,14 @@ export const accept = mutation({
       status: 'accepted',
       acceptedAt: now,
       acceptedBy: viewer._id,
+    });
+    // Existing members learn about the newcomer; the joiner's own row is
+    // pre-read like every actor self-event.
+    await createActivityEventWithInbox(ctx, {
+      circleId: invite.circleId,
+      actorId: viewer._id,
+      type: 'member.joined',
+      createdAt: now,
     });
 
     return {

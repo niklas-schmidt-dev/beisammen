@@ -81,3 +81,4 @@ services/              Reserved for future Go services
 
 See [docs/architecture.md](docs/architecture.md) for the environment boundary.
 See [docs/private-beta-qa.md](docs/private-beta-qa.md) for the current device QA checklist.
+See [docs/push-notifications.md](docs/push-notifications.md) for push delivery, credentials, and payloads.

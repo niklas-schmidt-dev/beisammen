@@ -12,7 +12,13 @@ export type AuthMode = 'native';
 export type AuthCapability = 'password' | 'email_otp' | 'social' | 'hosted_sso';
 export type DeploymentKind = 'cloud' | 'self-hosted';
 export type BillingProviderKind = 'revenuecat';
-export type NotificationKind = 'share.published' | 'comment.created' | 'reaction.set';
+export type NotificationKind =
+  | 'share.published'
+  | 'comment.created'
+  | 'reaction.set'
+  | 'member.joined';
+/** Languages push copy is rendered in; unknown device locales fall back to 'de'. */
+export type NotificationLocale = 'de' | 'en';
 export type NotificationDeliveryStatus = 'queued' | 'skipped' | 'delivered' | 'failed';
 export type MediaLocationSource = 'embedded' | 'device-fallback';
 export type PublicConfigValue = string | number | boolean | null;

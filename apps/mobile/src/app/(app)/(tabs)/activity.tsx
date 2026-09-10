@@ -20,7 +20,7 @@ import { Fonts, FontSize, Radius, Spacing } from '@/constants/theme';
 import { enterListItem, enterSection } from '@/lib/motion';
 import type { ActivityInboxItemRecord } from '@/features/convex/api';
 import { api } from '@/features/convex/api';
-import { buildShareDetailHref } from '@/features/engagement/navigation';
+import { buildActivityHref } from '@/features/notifications/navigation';
 import { useUserProfileImage } from '@/features/media/use-user-profile-image-url';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -32,6 +32,8 @@ function activityIcon(type: ActivityInboxItemRecord['type']): keyof typeof Ionic
       return 'chatbubble-ellipses-outline';
     case 'reaction.set':
       return 'heart-outline';
+    case 'member.joined':
+      return 'person-add-outline';
     default:
       return 'notifications-outline';
   }
@@ -141,12 +143,7 @@ export default function ActivityScreen() {
         return;
       }
 
-      router.push(
-        buildShareDetailHref({
-          shareBatchId: item.shareBatchId,
-          assetId: item.assetId,
-        }) as never,
-      );
+      router.push(buildActivityHref(item) as never);
     },
     [gt, markRead, router],
   );

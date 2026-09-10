@@ -12,16 +12,27 @@ import { internalAction, internalMutation, internalQuery, mutation, query } from
 import {
   expoPushAccessToken,
   fetchExpoPushReceipts,
+  isTransientExpoError,
   sendExpoPushMessages,
   type ExpoPushMessage,
 } from './lib/expoPush';
-import { NOTIFICATION_KINDS } from './lib/notifications';
+import { readBaseUrl } from './lib/httpHelpers';
+import {
+  NOTIFICATION_KINDS,
+  countUnreadInboxItems,
+  notificationChannelForKind,
+  notificationCollapseId,
+  notificationCopy,
+  notificationsProviderConfigured,
+  resolveNotificationLocale,
+} from './lib/notifications';
 import { requireViewer } from './lib/viewer';
 
 const notificationKindValidator = v.union(
   v.literal('share.published'),
   v.literal('comment.created'),
   v.literal('reaction.set'),
+  v.literal('member.joined'),
 );
 
 const notificationPlatformValidator = v.union(
@@ -35,6 +46,14 @@ const PUSH_SCAN_BATCH_SIZE = 300;
 const PUSH_RECEIPT_BATCH_SIZE = 100;
 const PUSH_RECEIPT_READY_AFTER_MS = 15 * 60 * 1000;
 const NOTIFICATION_DEVICE_TOKEN_SCAN_LIMIT = 20;
+/** Stale activity is not worth waking a phone for; matches a typical day. */
+const PUSH_TTL_SECONDS = 24 * 60 * 60;
+/**
+ * Queued attempts older than this without a ticket are abandoned. Covers the
+ * window in which the provider was misconfigured or the token missing so a
+ * fix does not release a flood of week-old pushes.
+ */
+const PUSH_QUEUE_MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000;
 
 type QueuedSendAttempt = {
   attemptId: Id<'notificationDeliveryAttempts'>;
@@ -43,6 +62,10 @@ type QueuedSendAttempt = {
   title: string;
   body: string;
   data: Record<string, string>;
+  badge: number | null;
+  channelId: string;
+  collapseId: string | null;
+  threadId: string;
   failureReason: string | null;
 };
 
@@ -92,30 +115,6 @@ function normalizeRequiredString(value: string, fieldName: string): string {
   return normalized;
 }
 
-function notificationCopy(input: {
-  actorName: string;
-  circleName: string;
-  kind: NotificationKind;
-}): { title: string; body: string } {
-  switch (input.kind) {
-    case 'comment.created':
-      return {
-        title: `${input.actorName} hat kommentiert`,
-        body: `Neue Antwort in ${input.circleName}`,
-      };
-    case 'reaction.set':
-      return {
-        title: `${input.actorName} hat reagiert`,
-        body: `Neue Reaktion in ${input.circleName}`,
-      };
-    case 'share.published':
-      return {
-        title: `${input.actorName} hat etwas geteilt`,
-        body: `Neuer Beitrag in ${input.circleName}`,
-      };
-  }
-}
-
 function ticketErrorMessage(ticket: { message?: string; details?: { error?: string } }): string {
   return ticket.message ?? ticket.details?.error ?? 'Expo push ticket failed.';
 }
@@ -130,6 +129,21 @@ function toExpoMessage(attempt: QueuedSendAttempt): ExpoPushMessage {
     title: attempt.title,
     body: attempt.body,
     data: attempt.data,
+    ...(attempt.badge !== null ? { badge: attempt.badge } : {}),
+    channelId: attempt.channelId,
+    ...(attempt.collapseId ? { collapseId: attempt.collapseId } : {}),
+    threadId: attempt.threadId,
+    sound: 'default',
+    priority: 'high',
+    ttl: PUSH_TTL_SECONDS,
+  };
+}
+
+function failedAttempt(attempt: QueuedSendAttempt, message: string): QueuedSendAttempt {
+  return {
+    ...attempt,
+    deviceToken: null,
+    failureReason: message,
   };
 }
 
@@ -139,6 +153,7 @@ export const registerDevice = mutation({
     token: v.string(),
     platform: notificationPlatformValidator,
     appVersion: v.optional(v.string()),
+    locale: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<NotificationDeviceRegistration> => {
     const viewer = await requireViewer(ctx);
@@ -175,6 +190,7 @@ export const registerDevice = mutation({
         provider: 'expo',
         platform: args.platform,
         ...(args.appVersion ? { appVersion: args.appVersion } : {}),
+        ...(args.locale?.trim() ? { locale: args.locale.trim() } : {}),
         updatedAt: now,
         lastRegisteredAt: now,
         disabledAt: undefined,
@@ -196,6 +212,7 @@ export const registerDevice = mutation({
       provider: 'expo',
       platform: args.platform,
       ...(args.appVersion ? { appVersion: args.appVersion } : {}),
+      ...(args.locale?.trim() ? { locale: args.locale.trim() } : {}),
       createdAt: now,
       updatedAt: now,
       lastRegisteredAt: now,
@@ -306,6 +323,7 @@ export const updatePreferences = mutation({
 
 export const getQueuedSendBatch = internalQuery({
   args: {
+    now: v.number(),
     limit: v.number(),
   },
   handler: async (ctx, args): Promise<QueuedSendAttempt[]> => {
@@ -317,6 +335,8 @@ export const getQueuedSendBatch = internalQuery({
     const candidates = rows
       .filter((attempt) => !attempt.providerMessageId)
       .slice(0, Math.min(args.limit, PUSH_SEND_BATCH_SIZE));
+    const instanceUrl = readBaseUrl();
+    const unreadByUser = new Map<Id<'users'>, number>();
     const batch: QueuedSendAttempt[] = [];
 
     for (const attempt of candidates) {
@@ -325,41 +345,93 @@ export const getQueuedSendBatch = internalQuery({
         ctx.db.get(attempt.circleId),
         attempt.deviceId ? ctx.db.get(attempt.deviceId) : Promise.resolve(null),
       ]);
+      const channelId = notificationChannelForKind(attempt.kind);
+      const skeleton: QueuedSendAttempt = {
+        attemptId: attempt._id,
+        deviceId: attempt.deviceId ?? null,
+        deviceToken: null,
+        title: '',
+        body: '',
+        data: {},
+        badge: null,
+        channelId,
+        collapseId: null,
+        threadId: attempt.circleId,
+        failureReason: null,
+      };
 
       if (!attempt.deviceId || !device || device.disabledAt !== undefined) {
+        batch.push(failedAttempt(skeleton, 'Notification device is no longer active.'));
+        continue;
+      }
+
+      if (attempt.createdAt + PUSH_QUEUE_MAX_AGE_MS < args.now) {
         batch.push({
-          attemptId: attempt._id,
-          deviceId: attempt.deviceId ?? null,
-          deviceToken: null,
-          title: '',
-          body: '',
-          data: {},
-          failureReason: 'Notification device is no longer active.',
+          ...failedAttempt(skeleton, 'Notification expired before the provider was configured.'),
+          // Stale, not broken: keep the device registered.
+          deviceId: null,
         });
         continue;
       }
 
-      const actor = activityEvent ? await ctx.db.get(activityEvent.actorId) : null;
+      if (!activityEvent) {
+        batch.push({
+          ...failedAttempt(skeleton, 'Activity event was deleted before delivery.'),
+          deviceId: null,
+        });
+        continue;
+      }
+
+      // Already read (e.g. opened on another device meanwhile): stay quiet.
+      const inboxItem = attempt.inboxItemId ? await ctx.db.get(attempt.inboxItemId) : null;
+
+      if (inboxItem && inboxItem.status === 'read') {
+        batch.push({
+          ...failedAttempt(skeleton, 'Activity was read before delivery.'),
+          deviceId: null,
+        });
+        continue;
+      }
+
+      const [actor, reaction] = await Promise.all([
+        ctx.db.get(activityEvent.actorId),
+        activityEvent.reactionId ? ctx.db.get(activityEvent.reactionId) : Promise.resolve(null),
+      ]);
+      const locale = resolveNotificationLocale(device.locale);
       const copy = notificationCopy({
-        actorName: actor?.displayName ?? actor?.email ?? 'Jemand',
-        circleName: circle?.name ?? 'deinem Circle',
+        actorName:
+          actor?.displayName?.trim() ||
+          actor?.email?.trim() ||
+          (locale === 'en' ? 'Someone' : 'Jemand'),
+        circleName: circle?.name ?? (locale === 'en' ? 'your circle' : 'deinem Circle'),
         kind: attempt.kind,
+        locale,
+        emoji: reaction?.emoji ?? null,
       });
+      let badge = unreadByUser.get(attempt.userId);
+
+      if (badge === undefined) {
+        badge = await countUnreadInboxItems(ctx, attempt.userId);
+        unreadByUser.set(attempt.userId, badge);
+      }
 
       batch.push({
-        attemptId: attempt._id,
+        ...skeleton,
         deviceId: device._id,
         deviceToken: device.deviceToken,
         title: copy.title,
         body: copy.body,
         data: {
+          instanceUrl,
           activityEventId: attempt.activityEventId,
           ...(attempt.inboxItemId ? { inboxItemId: attempt.inboxItemId } : {}),
           kind: attempt.kind,
-          shareBatchId: attempt.shareBatchId,
+          circleId: attempt.circleId,
+          ...(attempt.shareBatchId ? { shareBatchId: attempt.shareBatchId } : {}),
           ...(attempt.assetId ? { assetId: attempt.assetId } : {}),
         },
-        failureReason: null,
+        badge,
+        collapseId: notificationCollapseId(attempt) ?? null,
       });
     }
 
@@ -490,7 +562,7 @@ export const dispatchQueued = internalAction({
     const now = args.now ?? Date.now();
     const accessToken = expoPushAccessToken();
 
-    if (!accessToken) {
+    if (!notificationsProviderConfigured()) {
       return {
         scanned: 0,
         sent: 0,
@@ -502,7 +574,7 @@ export const dispatchQueued = internalAction({
 
     const batch: QueuedSendAttempt[] = await ctx.runQuery(
       internal.notifications.getQueuedSendBatch,
-      { limit: PUSH_SEND_BATCH_SIZE },
+      { now, limit: PUSH_SEND_BATCH_SIZE },
     );
     const invalidResults: SendMarkResult[] = batch
       .filter((attempt) => !attempt.deviceToken)
@@ -514,6 +586,7 @@ export const dispatchQueued = internalAction({
       }));
     const deliverable = batch.filter((attempt) => attempt.deviceToken);
     const sendResults: SendMarkResult[] = [...invalidResults];
+    let retriedTickets = 0;
 
     if (deliverable.length > 0) {
       const response = await sendExpoPushMessages(deliverable.map(toExpoMessage), accessToken);
@@ -544,24 +617,31 @@ export const dispatchQueued = internalAction({
           })),
         );
       } else {
-        sendResults.push(
-          ...deliverable.map((attempt, index) => {
-            const ticket = response.tickets[index];
+        deliverable.forEach((attempt, index) => {
+          const ticket = response.tickets[index];
 
-            return ticket?.status === 'ok' && ticket.id
-              ? {
-                  attemptId: attempt.attemptId,
-                  status: 'sent' as const,
-                  providerMessageId: ticket.id,
-                }
-              : {
-                  attemptId: attempt.attemptId,
-                  status: 'failed' as const,
-                  errorMessage: ticket ? ticketErrorMessage(ticket) : 'Expo push ticket missing.',
-                  disableDevice: ticket?.details?.error === 'DeviceNotRegistered',
-                };
-          }),
-        );
+          if (ticket?.status === 'ok' && ticket.id) {
+            sendResults.push({
+              attemptId: attempt.attemptId,
+              status: 'sent',
+              providerMessageId: ticket.id,
+            });
+            return;
+          }
+
+          if (isTransientExpoError(ticket?.details)) {
+            // Left queued (no providerMessageId); the next pass retries it.
+            retriedTickets += 1;
+            return;
+          }
+
+          sendResults.push({
+            attemptId: attempt.attemptId,
+            status: 'failed',
+            errorMessage: ticket ? ticketErrorMessage(ticket) : 'Expo push ticket missing.',
+            disableDevice: ticket?.details?.error === 'DeviceNotRegistered',
+          });
+        });
       }
     }
 
@@ -576,7 +656,7 @@ export const dispatchQueued = internalAction({
       scanned: batch.length,
       sent: sendResults.filter((result) => result.status === 'sent').length,
       failed: sendResults.filter((result) => result.status === 'failed').length,
-      retried: 0,
+      retried: retriedTickets,
       skipped: 0,
     };
   },
@@ -590,7 +670,7 @@ export const checkReceipts = internalAction({
     const now = args.now ?? Date.now();
     const accessToken = expoPushAccessToken();
 
-    if (!accessToken) {
+    if (!notificationsProviderConfigured()) {
       return {
         scanned: 0,
         delivered: 0,

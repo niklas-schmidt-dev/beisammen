@@ -17,7 +17,7 @@ const MAX_PREVIEW_ITEMS = 6;
 interface ActivityStripProps {
   activities: ActivityEventRecord[];
   status: ActivityStatus;
-  onOpenShare: (shareBatchId: string, assetId?: string | null) => void;
+  onOpenActivity: (activity: ActivityEventRecord) => void;
   onOpenActivityTab: () => void;
 }
 
@@ -29,6 +29,8 @@ function activityIcon(type: ActivityEventRecord['type']): keyof typeof Ionicons.
       return 'chatbubble-ellipses-outline';
     case 'reaction.set':
       return 'heart-outline';
+    case 'member.joined':
+      return 'person-add-outline';
     default:
       return 'notifications-outline';
   }
@@ -37,11 +39,11 @@ function activityIcon(type: ActivityEventRecord['type']): keyof typeof Ionicons.
 const ActivityRow = memo(function ActivityRow({
   activity,
   hasSeparator,
-  onOpenShare,
+  onOpenActivity,
 }: {
   activity: ActivityEventRecord;
   hasSeparator: boolean;
-  onOpenShare: (shareBatchId: string, assetId?: string | null) => void;
+  onOpenActivity: (activity: ActivityEventRecord) => void;
 }) {
   const theme = useTheme();
   const gt = useGT();
@@ -54,7 +56,7 @@ const ActivityRow = memo(function ActivityRow({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={gt('{text} Beitrag öffnen', { text: activity.displayText })}
-      onPress={() => onOpenShare(activity.shareBatchId, activity.assetId)}
+      onPress={() => onOpenActivity(activity)}
       style={({ pressed }) => [
         styles.row,
         hasSeparator && {
@@ -90,8 +92,8 @@ const ActivityRow = memo(function ActivityRow({
 
 export const ActivityStrip = memo(function ActivityStrip({
   activities,
+  onOpenActivity,
   onOpenActivityTab,
-  onOpenShare,
   status,
 }: ActivityStripProps) {
   const theme = useTheme();
@@ -121,7 +123,7 @@ export const ActivityStrip = memo(function ActivityStrip({
               key={activity._id}
               activity={activity}
               hasSeparator={index < previewActivities.length - 1}
-              onOpenShare={onOpenShare}
+              onOpenActivity={onOpenActivity}
             />
           ))
         ) : (

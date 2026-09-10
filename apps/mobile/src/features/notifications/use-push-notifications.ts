@@ -2,10 +2,11 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
+import { useLocale, useMessages } from 'gt-react-native';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
-import { useConvexAuth, useMutation } from 'convex/react';
+import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 
 import { useSession } from '@/features/auth/session-provider';
 import { api } from '@/features/convex/api';
@@ -13,7 +14,8 @@ import { recordClientDiagnostic } from '@/features/diagnostics/buffer';
 import { appEnv } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
 
-import { buildNotificationHref } from './navigation';
+import { ensureNotificationChannels } from './channels';
+import { resolveNotificationNavigation } from './navigation';
 import {
   pushRegistrationReadiness,
   resolveExpoProjectId,
@@ -86,7 +88,11 @@ function logRegistrationSkip(input: {
   });
 }
 
-async function requestExpoPushToken(input: { instanceUrl: string }): Promise<string | null> {
+async function requestExpoPushToken(input: {
+  instanceUrl: string;
+  locale: string;
+  translate: (message: string) => string;
+}): Promise<string | null> {
   const platform = notificationPlatform();
   const readiness = pushRegistrationReadiness({
     isDevice: Device.isDevice,
@@ -102,6 +108,10 @@ async function requestExpoPushToken(input: { instanceUrl: string }): Promise<str
     });
     return null;
   }
+
+  // Channels must exist before the first notification arrives; Android
+  // drops messages addressed to an unknown channelId onto the default one.
+  await ensureNotificationChannels({ locale: input.locale, translate: input.translate });
 
   const existingPermission = await Notifications.getPermissionsAsync();
   const finalPermission =
@@ -123,14 +133,41 @@ async function requestExpoPushToken(input: { instanceUrl: string }): Promise<str
   return token.data;
 }
 
+/**
+ * Keeps the app icon badge equal to the unread activity count. The server
+ * sends the same number with each push; this covers the other direction
+ * (items read in-app or on another device) so the badge never goes stale.
+ */
+function useAppIconBadgeSync(enabled: boolean) {
+  const summary = useQuery(api.activity.summaryForViewer, enabled ? {} : 'skip');
+  const unreadCount = enabled ? summary?.unreadCount : undefined;
+
+  useEffect(() => {
+    if (unreadCount === undefined || Platform.OS === 'web') {
+      return;
+    }
+
+    void Notifications.setBadgeCountAsync(unreadCount).catch((error) => {
+      logger.debug('Failed to sync app icon badge', { error });
+    });
+  }, [unreadCount]);
+}
+
 export function usePushNotifications() {
   const router = useRouter();
+  const locale = useLocale();
+  const translate = useMessages();
   const { instance, session } = useSession();
   const convexAuth = useConvexAuth();
   const registerDevice = useMutation(api.notifications.registerDevice);
   const unregisterDevice = useMutation(api.notifications.unregisterDevice);
   const lastRegistrationKeyRef = useRef<string | null>(null);
   const registeredDeviceRef = useRef<{ instanceUrl: string; token: string } | null>(null);
+  const activeInstanceUrl = instance.instance.baseUrl;
+  const activeInstanceUrlRef = useRef(activeInstanceUrl);
+  activeInstanceUrlRef.current = activeInstanceUrl;
+
+  useAppIconBadgeSync(Boolean(session) && convexAuth.isAuthenticated);
 
   useEffect(() => {
     const handledResponseIds = new Set<string>();
@@ -143,16 +180,26 @@ export function usePushNotifications() {
       }
 
       handledResponseIds.add(responseId);
-      const href = buildNotificationHref(
+      const navigation = resolveNotificationNavigation(
         response.notification.request.content.data as Record<string, unknown> | undefined,
+        { activeInstanceUrl: activeInstanceUrlRef.current },
       );
 
-      if (!href) {
-        return false;
+      switch (navigation.kind) {
+        case 'navigate':
+          router.push(navigation.href as never);
+          return true;
+        case 'wrong_instance':
+          // The share lives on a backend this device is no longer connected
+          // to; the activity tab is the closest safe landing spot.
+          logger.info('Notification belongs to another instance', {
+            instanceUrl: navigation.instanceUrl,
+          });
+          router.push('/activity' as never);
+          return true;
+        case 'ignore':
+          return false;
       }
-
-      router.push(href as never);
-      return true;
     }
 
     function clearLastResponse() {
@@ -196,6 +243,7 @@ export function usePushNotifications() {
       });
       registeredDeviceRef.current = null;
       lastRegistrationKeyRef.current = null;
+      await Notifications.setBadgeCountAsync(0).catch(() => undefined);
     });
   }, [unregisterDevice]);
 
@@ -205,8 +253,10 @@ export function usePushNotifications() {
       return;
     }
 
-    const instanceUrl = instance.instance.baseUrl;
-    const registrationKey = `${instanceUrl}:${session.subject}`;
+    const instanceUrl = activeInstanceUrl;
+    // Re-register when the language changes so the server renders push copy
+    // in the language the user actually reads.
+    const registrationKey = `${instanceUrl}:${session.subject}:${locale}`;
 
     if (lastRegistrationKeyRef.current === registrationKey) {
       return;
@@ -217,7 +267,7 @@ export function usePushNotifications() {
 
     async function register() {
       try {
-        const token = await requestExpoPushToken({ instanceUrl });
+        const token = await requestExpoPushToken({ instanceUrl, locale, translate });
 
         if (!token || isCancelled) {
           return;
@@ -228,11 +278,13 @@ export function usePushNotifications() {
           token,
           platform: notificationPlatform(),
           appVersion: appEnv.appVersion,
+          locale,
         });
         registeredDeviceRef.current = { instanceUrl, token };
         logger.info('Registered push notification device', {
           instanceUrl,
           platform: notificationPlatform(),
+          locale,
         });
       } catch (error) {
         lastRegistrationKeyRef.current = null;
@@ -252,10 +304,5 @@ export function usePushNotifications() {
     return () => {
       isCancelled = true;
     };
-  }, [
-    convexAuth.isAuthenticated,
-    instance.instance.baseUrl,
-    registerDevice,
-    session,
-  ]);
+  }, [activeInstanceUrl, convexAuth.isAuthenticated, locale, registerDevice, session, translate]);
 }

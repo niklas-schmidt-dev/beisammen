@@ -616,6 +616,7 @@ async function countNotificationDevices(input: {
 
 async function createQueuedPushAttempt(input?: {
   disabledKind?: 'share.published' | 'comment.created' | 'reaction.set';
+  locale?: string;
 }) {
   const t = createTestDb();
   const owner = await createCircleFor(t, 'owner@example.com', 'Family Circle');
@@ -631,6 +632,7 @@ async function createQueuedPushAttempt(input?: {
     token: 'ExponentPushToken[member-device]',
     platform: 'ios',
     appVersion: '0.1.0',
+    ...(input?.locale ? { locale: input.locale } : {}),
   });
 
   if (input?.disabledKind) {
@@ -3407,8 +3409,9 @@ describe('shares, uploads, and feed', () => {
       emoji: '🔥',
     });
 
+    // Owner: the member's join + comment are unread; member: share + reaction.
     await expect(owner.user.query(api.activity.summaryForViewer, {})).resolves.toEqual({
-      unreadCount: 1,
+      unreadCount: 2,
       hasUnread: true,
     });
     await expect(member.user.query(api.activity.summaryForViewer, {})).resolves.toEqual({
@@ -3420,9 +3423,17 @@ describe('shares, uploads, and feed', () => {
       paginationOpts: { numItems: 10, cursor: null },
     });
 
-    expect(memberInbox.page).toHaveLength(3);
+    expect(memberInbox.page).toHaveLength(4);
     expect(memberInbox.page).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          actorId: member.viewer._id,
+          type: 'member.joined',
+          circleId: owner.circleId,
+          shareBatchId: null,
+          assetId: null,
+          status: 'read',
+        }),
         expect.objectContaining({
           actorId: owner.viewer._id,
           type: 'share.published',
@@ -3452,9 +3463,15 @@ describe('shares, uploads, and feed', () => {
       paginationOpts: { numItems: 10, cursor: null },
     });
 
-    expect(ownerInbox.page).toHaveLength(3);
+    expect(ownerInbox.page).toHaveLength(4);
     expect(ownerInbox.page).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          actorId: member.viewer._id,
+          type: 'member.joined',
+          shareBatchId: null,
+          status: 'unread',
+        }),
         expect.objectContaining({
           actorId: member.viewer._id,
           type: 'comment.created',
@@ -3536,6 +3553,7 @@ describe('shares, uploads, and feed', () => {
       { kind: 'share.published', enabled: true, updatedAt: null },
       { kind: 'comment.created', enabled: true, updatedAt: null },
       { kind: 'reaction.set', enabled: true, updatedAt: null },
+      { kind: 'member.joined', enabled: true, updatedAt: null },
     ]);
 
     await owner.user.mutation(api.notifications.updatePreferences, {
@@ -3547,6 +3565,7 @@ describe('shares, uploads, and feed', () => {
       { kind: 'share.published', enabled: true, updatedAt: null },
       { kind: 'comment.created', enabled: true, updatedAt: null },
       expect.objectContaining({ kind: 'reaction.set', enabled: false }),
+      { kind: 'member.joined', enabled: true, updatedAt: null },
     ]);
   });
 
@@ -3636,14 +3655,25 @@ describe('shares, uploads, and feed', () => {
             to: 'ExponentPushToken[member-device]',
             title: 'owner@example.com hat etwas geteilt',
             body: 'Neuer Beitrag in Family Circle',
+            // Unread inbox items for the member: the join is their own
+            // (pre-read), so only the share counts.
+            badge: 1,
+            channelId: 'shares',
+            threadId: owner.circleId,
+            sound: 'default',
+            priority: 'high',
+            ttl: 24 * 60 * 60,
             data: expect.objectContaining({
+              instanceUrl: expect.any(String),
               activityEventId: attempt.activityEventId,
               inboxItemId: attempt.inboxItemId,
               kind: 'share.published',
+              circleId: owner.circleId,
               shareBatchId: published.shareBatchId,
             }),
           }),
         ]);
+        expect(messages[0]).not.toHaveProperty('collapseId');
         await expect(t.run(async (ctx) => await ctx.db.get(attempt._id))).resolves.toMatchObject({
           status: 'queued',
           providerMessageId: 'expo-receipt-1',
@@ -3870,6 +3900,337 @@ describe('shares, uploads, and feed', () => {
     });
   });
 
+  test('push copy follows the registered device locale', async () => {
+    await withExpoPushAccessToken(async () => {
+      const { attempt, owner, t } = await createQueuedPushAttempt({ locale: 'en-US' });
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ status: 'ok', id: 'expo-receipt-en' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+
+      try {
+        await owner.user.action(internal.notifications.dispatchQueued, {
+          now: 1_725_000_000_000,
+        });
+
+        const [, init] = fetchSpy.mock.calls[0]!;
+        const messages = JSON.parse((init as { body?: string }).body ?? '[]') as Array<{
+          title: string;
+          body: string;
+        }>;
+
+        expect(messages[0]).toMatchObject({
+          title: 'owner@example.com shared something',
+          body: 'New post in Family Circle',
+        });
+        await expect(t.run(async (ctx) => await ctx.db.get(attempt._id))).resolves.toMatchObject({
+          providerMessageId: 'expo-receipt-en',
+        });
+      } finally {
+        fetchSpy.mockRestore();
+      }
+    });
+  });
+
+  test('reactions only push to the share author and collapse per target', async () => {
+    await withExpoPushAccessToken(async () => {
+      const { member, owner, published, t } = await createQueuedPushAttempt();
+      // A third member who must not be pushed about someone else's reaction.
+      const bystanderInvite = await owner.user.mutation(api.invites.create, {
+        circleId: owner.circleId,
+        invitedEmail: 'bystander@example.com',
+        role: 'member',
+      });
+      const bystander = await upsertViewer(t, 'bystander@example.com', 'Bystander');
+      await bystander.user.mutation(api.invites.accept, { token: bystanderInvite.token });
+      await bystander.user.mutation(api.notifications.registerDevice, {
+        instanceUrl: 'https://cloud.example.com',
+        token: 'ExponentPushToken[bystander-device]',
+        platform: 'android',
+      });
+      await owner.user.mutation(api.notifications.registerDevice, {
+        instanceUrl: 'https://cloud.example.com',
+        token: 'ExponentPushToken[owner-device]',
+        platform: 'ios',
+      });
+
+      await member.user.mutation(api.reactions.set, {
+        shareBatchId: published.shareBatchId,
+        assetId: published.assetId,
+        emoji: '🔥',
+      });
+
+      const attempts = await listNotificationDeliveryAttempts({
+        t,
+        shareBatchId: published.shareBatchId,
+      });
+      const reactionAttempts = attempts.filter((row) => row.kind === 'reaction.set');
+
+      // Only the author (owner) gets a reaction push; the bystander still has
+      // the event in their inbox but no delivery attempt.
+      expect(reactionAttempts).toHaveLength(1);
+      expect(reactionAttempts[0]).toMatchObject({
+        userId: owner.viewer._id,
+        status: 'queued',
+      });
+      const bystanderInbox = await bystander.user.query(api.activity.listInboxForViewer, {
+        paginationOpts: { numItems: 10, cursor: null },
+      });
+      expect(bystanderInbox.page).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'reaction.set', status: 'unread' }),
+        ]),
+      );
+
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: [
+              { status: 'ok', id: 'r1' },
+              { status: 'ok', id: 'r2' },
+              { status: 'ok', id: 'r3' },
+            ],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+
+      try {
+        await owner.user.action(internal.notifications.dispatchQueued, {
+          now: 1_725_000_000_000,
+        });
+
+        const [, init] = fetchSpy.mock.calls[0]!;
+        const messages = JSON.parse((init as { body?: string }).body ?? '[]') as Array<{
+          to: string;
+          title: string;
+          body: string;
+          channelId: string;
+          collapseId?: string;
+          data: Record<string, string>;
+        }>;
+        const reactionMessage = messages.find((message) => message.data.kind === 'reaction.set');
+
+        expect(reactionMessage).toMatchObject({
+          to: 'ExponentPushToken[owner-device]',
+          title: 'Member hat mit 🔥 reagiert',
+          body: 'Neue Reaktion auf deinen Beitrag in Family Circle',
+          channelId: 'engagement',
+          collapseId: `reaction:${published.shareBatchId}:${published.assetId}`,
+          data: expect.objectContaining({
+            shareBatchId: published.shareBatchId,
+            assetId: published.assetId,
+          }),
+        });
+      } finally {
+        fetchSpy.mockRestore();
+      }
+    });
+  });
+
+  test('accepting an invite notifies existing members with a circle deep link', async () => {
+    await withExpoPushAccessToken(async () => {
+      const t = createTestDb();
+      const owner = await createCircleFor(t, 'owner@example.com', 'Family Circle');
+      await owner.user.mutation(api.notifications.registerDevice, {
+        instanceUrl: 'https://cloud.example.com',
+        token: 'ExponentPushToken[owner-device]',
+        platform: 'ios',
+      });
+      const invite = await owner.user.mutation(api.invites.create, {
+        circleId: owner.circleId,
+        invitedEmail: 'member@example.com',
+        role: 'member',
+      });
+      const member = await upsertViewer(t, 'member@example.com', 'Member');
+      await member.user.mutation(api.invites.accept, { token: invite.token });
+
+      const attempts = await t.run(async (ctx) =>
+        await ctx.db
+          .query('notificationDeliveryAttempts')
+          .withIndex('by_user_and_created_at', (q) => q.eq('userId', owner.viewer._id))
+          .collect(),
+      );
+      expect(attempts).toEqual([
+        expect.objectContaining({
+          kind: 'member.joined',
+          circleId: owner.circleId,
+          status: 'queued',
+        }),
+      ]);
+      expect(attempts[0]).not.toHaveProperty('shareBatchId');
+
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ status: 'ok', id: 'join-1' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+
+      try {
+        await expect(
+          owner.user.action(internal.notifications.dispatchQueued, { now: 1_725_000_000_000 }),
+        ).resolves.toMatchObject({ sent: 1, failed: 0 });
+
+        const [, init] = fetchSpy.mock.calls[0]!;
+        const messages = JSON.parse((init as { body?: string }).body ?? '[]') as Array<{
+          title: string;
+          body: string;
+          channelId: string;
+          collapseId?: string;
+          data: Record<string, string>;
+        }>;
+
+        expect(messages[0]).toMatchObject({
+          title: 'Member ist beigetreten',
+          body: 'Neues Mitglied in Family Circle',
+          channelId: 'circle',
+          collapseId: `member:${owner.circleId}`,
+          data: expect.objectContaining({
+            kind: 'member.joined',
+            circleId: owner.circleId,
+          }),
+        });
+        expect(messages[0]!.data).not.toHaveProperty('shareBatchId');
+      } finally {
+        fetchSpy.mockRestore();
+      }
+
+      // The joiner sees their own join pre-read; the owner sees it unread.
+      const memberInbox = await member.user.query(api.activity.listInboxForViewer, {
+        paginationOpts: { numItems: 10, cursor: null },
+      });
+      expect(memberInbox.page).toEqual([
+        expect.objectContaining({
+          type: 'member.joined',
+          shareBatchId: null,
+          status: 'read',
+          displayText: 'Member ist dem Circle beigetreten.',
+        }),
+      ]);
+    });
+  });
+
+  test('queued pushes are dropped once the activity was read elsewhere', async () => {
+    await withExpoPushAccessToken(async () => {
+      const { attempt, member, owner, t } = await createQueuedPushAttempt();
+      await member.user.mutation(api.activity.markRead, {
+        inboxItemId: attempt.inboxItemId!,
+      });
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      try {
+        await expect(
+          owner.user.action(internal.notifications.dispatchQueued, { now: 1_725_000_000_000 }),
+        ).resolves.toMatchObject({ scanned: 1, sent: 0, failed: 1 });
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+        await expect(t.run(async (ctx) => await ctx.db.get(attempt._id))).resolves.toMatchObject({
+          status: 'failed',
+          errorMessage: 'Activity was read before delivery.',
+        });
+        // Nothing wrong with the device; it must stay registered.
+        await expect(
+          t.run(async (ctx) => (attempt.deviceId ? await ctx.db.get(attempt.deviceId) : null)),
+        ).resolves.not.toHaveProperty('disabledAt');
+      } finally {
+        fetchSpy.mockRestore();
+      }
+    });
+  });
+
+  test('queued pushes older than two days expire instead of flooding devices', async () => {
+    await withExpoPushAccessToken(async () => {
+      const { attempt, owner, t } = await createQueuedPushAttempt();
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      try {
+        await expect(
+          owner.user.action(internal.notifications.dispatchQueued, {
+            now: attempt.createdAt + 3 * 24 * 60 * 60 * 1000,
+          }),
+        ).resolves.toMatchObject({ scanned: 1, sent: 0, failed: 1 });
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+        await expect(t.run(async (ctx) => await ctx.db.get(attempt._id))).resolves.toMatchObject({
+          status: 'failed',
+          errorMessage: 'Notification expired before the provider was configured.',
+        });
+      } finally {
+        fetchSpy.mockRestore();
+      }
+    });
+  });
+
+  test('EXPO_PUSH_ENABLED allows sending without an access token', async () => {
+    await withoutExpoPushAccessToken(async () => {
+      const originalEnabled = process.env.EXPO_PUSH_ENABLED;
+      process.env.EXPO_PUSH_ENABLED = 'true';
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ status: 'ok', id: 'anon-1' }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+
+      try {
+        const { attempt, owner } = await createQueuedPushAttempt();
+
+        expect(attempt).toMatchObject({ status: 'queued' });
+        await expect(
+          owner.user.action(internal.notifications.dispatchQueued, { now: 1_725_000_000_000 }),
+        ).resolves.toMatchObject({ sent: 1 });
+
+        const [, init] = fetchSpy.mock.calls[0]!;
+        expect((init as { headers?: Record<string, string> }).headers).not.toHaveProperty(
+          'Authorization',
+        );
+      } finally {
+        fetchSpy.mockRestore();
+
+        if (originalEnabled === undefined) {
+          delete process.env.EXPO_PUSH_ENABLED;
+        } else {
+          process.env.EXPO_PUSH_ENABLED = originalEnabled;
+        }
+      }
+    });
+  });
+
+  test('MessageRateExceeded tickets leave the attempt queued for retry', async () => {
+    await withExpoPushAccessToken(async () => {
+      const { attempt, owner, t } = await createQueuedPushAttempt();
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                status: 'error',
+                message: 'Too many notifications.',
+                details: { error: 'MessageRateExceeded' },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+
+      try {
+        await expect(
+          owner.user.action(internal.notifications.dispatchQueued, { now: 1_725_000_000_000 }),
+        ).resolves.toEqual({ scanned: 1, sent: 0, failed: 0, retried: 1, skipped: 0 });
+
+        const stored = await t.run(async (ctx) => await ctx.db.get(attempt._id));
+        expect(stored).toMatchObject({ status: 'queued' });
+        expect(stored).not.toHaveProperty('providerMessageId');
+      } finally {
+        fetchSpy.mockRestore();
+      }
+    });
+  });
+
   test('disabled notification preferences create skipped attempts that are never sent', async () => {
     await withExpoPushAccessToken(async () => {
       const { attempt, owner } = await createQueuedPushAttempt({
@@ -3933,7 +4294,8 @@ describe('shares, uploads, and feed', () => {
       paginationOpts: { numItems: 10, cursor: null },
     });
 
-    expect(memberInbox.page).toHaveLength(2);
+    // Share + reaction from the owner, plus the member's own (pre-read) join.
+    expect(memberInbox.page).toHaveLength(3);
 
     const [firstItem, ...allItems] = memberInbox.page;
 
@@ -3967,7 +4329,7 @@ describe('shares, uploads, and feed', () => {
         inboxItemIds: [firstItem!, ...allItems].map((item) => item._id),
       }),
     ).resolves.toEqual({
-      readCount: 2,
+      readCount: 3,
     });
     await expect(member.user.query(api.activity.summaryForViewer, {})).resolves.toEqual({
       unreadCount: 0,

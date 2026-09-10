@@ -20,7 +20,12 @@ export const NOTIFICATION_PREFERENCE_ROWS: Array<{
   {
     kind: 'reaction.set',
     label: msg('Reaktionen'),
-    description: msg('Wenn jemand mit einem Emoji auf gemeinsame Erinnerungen reagiert.'),
+    description: msg('Wenn jemand mit einem Emoji auf deine Beiträge reagiert.'),
+  },
+  {
+    kind: 'member.joined',
+    label: msg('Neue Mitglieder'),
+    description: msg('Wenn jemand einer Einladung in einen deiner Circles folgt.'),
   },
 ];
 

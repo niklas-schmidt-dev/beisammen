@@ -167,6 +167,19 @@ export const purgeCircleBatch = internalMutation({
         state.deleted += 1;
       }
 
+      // Circle-level events (member.joined) have no share batch, so their
+      // delivery attempts are only reachable through the event.
+      const deliveryAttempts = await ctx.db
+        .query('notificationDeliveryAttempts')
+        .withIndex('by_activity_event_id', (q) => q.eq('activityEventId', event._id))
+        .take(Math.max(state.budget - 1, 0));
+
+      for (const attempt of deliveryAttempts) {
+        await ctx.db.delete(attempt._id);
+        state.budget -= 1;
+        state.deleted += 1;
+      }
+
       return state.budget > 0;
     });
     await purgeByCircleIndex(ctx, state, 'memoryItems', 'by_circle_and_timeline_at', args.circleId);

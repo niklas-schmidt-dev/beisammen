@@ -19,10 +19,12 @@ import type { CircleUploadReadiness } from '@beisammen/contracts';
 import { BottomTabInset, Fonts, FontSize, Spacing } from '@/constants/theme';
 import { enterListItem, enterSection } from '@/lib/motion';
 import { useSession } from '@/features/auth/session-provider';
+import type { ActivityEventRecord } from '@/features/convex/api';
 import { api } from '@/features/convex/api';
 import { useCrypto } from '@/features/crypto/provider';
 import { useCircleKeys } from '@/features/crypto/use-circle-keys';
 import { buildShareDetailHref } from '@/features/engagement/navigation';
+import { buildActivityHref } from '@/features/notifications/navigation';
 import { uploadBlockerNotice } from '@/features/media/upload-readiness';
 import { useProfileImage } from '@/features/media/use-profile-image-url';
 import { useShareUploadFlow } from '@/features/media/use-share-upload-flow';
@@ -378,6 +380,10 @@ export default function HomeScreen() {
       router.push(buildShareDetailHref({ shareBatchId: shareId, assetId }) as never),
     [router],
   );
+  const handleOpenActivity = useCallback(
+    (activity: ActivityEventRecord) => router.push(buildActivityHref(activity) as never),
+    [router],
+  );
 
   const handleOpenSettings = useCallback(() => {
     router.push('/settings' as never);
@@ -497,7 +503,7 @@ export default function HomeScreen() {
               <ActivityStrip
                 activities={activityItems}
                 status={activityFeed.status}
-                onOpenShare={handleOpenShare}
+                onOpenActivity={handleOpenActivity}
                 onOpenActivityTab={() => router.push('/activity' as never)}
               />
             </Animated.View>

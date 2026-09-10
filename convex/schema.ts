@@ -412,7 +412,8 @@ export default defineSchema({
     circleId: v.id('circles'),
     actorId: v.id('users'),
     type: v.string(),
-    shareBatchId: v.id('shareBatches'),
+    // Absent for circle-level activity (e.g. member.joined) that has no share.
+    shareBatchId: v.optional(v.id('shareBatches')),
     assetId: v.optional(v.id('assets')),
     status: v.union(v.literal('unread'), v.literal('read')),
     createdAt: v.number(),
@@ -436,6 +437,9 @@ export default defineSchema({
       v.literal('unknown'),
     ),
     appVersion: v.optional(v.string()),
+    // BCP 47 tag reported by the app at registration; push copy is rendered
+    // per device so a bilingual household gets each phone in its own language.
+    locale: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
     lastRegisteredAt: v.number(),
@@ -452,6 +456,7 @@ export default defineSchema({
       v.literal('share.published'),
       v.literal('comment.created'),
       v.literal('reaction.set'),
+      v.literal('member.joined'),
     ),
     enabled: v.boolean(),
     updatedAt: v.number(),
@@ -467,8 +472,9 @@ export default defineSchema({
       v.literal('share.published'),
       v.literal('comment.created'),
       v.literal('reaction.set'),
+      v.literal('member.joined'),
     ),
-    shareBatchId: v.id('shareBatches'),
+    shareBatchId: v.optional(v.id('shareBatches')),
     assetId: v.optional(v.id('assets')),
     provider: v.literal('expo'),
     status: v.union(

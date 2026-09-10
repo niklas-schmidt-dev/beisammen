@@ -13,11 +13,13 @@ describe('notification preferences', () => {
       'share.published',
       'comment.created',
       'reaction.set',
+      'member.joined',
     ]);
     expect(NOTIFICATION_PREFERENCE_ROWS.map((row) => row.label)).toEqual([
       'Neue Beiträge',
       'Kommentare',
       'Reaktionen',
+      'Neue Mitglieder',
     ]);
   });
 

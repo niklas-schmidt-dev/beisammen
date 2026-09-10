@@ -215,8 +215,9 @@ export interface ActivityEventRecord {
   actorAvatarUrl?: string;
   actorHasProfileImage: boolean;
   actorProfileImageKey?: string;
-  type: 'share.published' | 'comment.created' | 'reaction.set' | string;
-  shareBatchId: string;
+  type: 'share.published' | 'comment.created' | 'reaction.set' | 'member.joined' | string;
+  /** Null for circle-level activity such as a member joining. */
+  shareBatchId: string | null;
   assetId: string | null;
   displayText: string;
   createdAt: number;
@@ -239,8 +240,9 @@ export interface ActivityInboxItemRecord {
   actorAvatarUrl?: string;
   actorHasProfileImage: boolean;
   actorProfileImageKey?: string;
-  type: 'share.published' | 'comment.created' | 'reaction.set' | string;
-  shareBatchId: string;
+  type: 'share.published' | 'comment.created' | 'reaction.set' | 'member.joined' | string;
+  /** Null for circle-level activity such as a member joining. */
+  shareBatchId: string | null;
   assetId: string | null;
   status: 'unread' | 'read';
   readAt: number | null;
@@ -426,6 +428,8 @@ export type RegisterNotificationDeviceArgs = {
   token: string;
   platform: 'ios' | 'android' | 'web' | 'unknown';
   appVersion?: string;
+  /** BCP 47 tag of the app UI language; push copy is rendered per device. */
+  locale?: string;
 };
 
 export type CreateInviteArgs = {

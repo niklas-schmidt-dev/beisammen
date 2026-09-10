@@ -10,10 +10,17 @@ export async function createActivityEventWithInbox(
     circleId: Id<'circles'>;
     actorId: Id<'users'>;
     type: string;
-    shareBatchId: Id<'shareBatches'>;
+    /** Absent for circle-level events such as a member joining. */
+    shareBatchId?: Id<'shareBatches'>;
     assetId?: Id<'assets'>;
     commentId?: Id<'comments'>;
     reactionId?: Id<'reactions'>;
+    /**
+     * Restricts push delivery (not the inbox) to these members. Reactions use
+     * this so only the share author is interrupted; the whole circle still
+     * sees the event in the activity history.
+     */
+    pushRecipientIds?: Id<'users'>[];
     createdAt: number;
   },
 ) {
@@ -21,8 +28,8 @@ export async function createActivityEventWithInbox(
     circleId: input.circleId,
     actorId: input.actorId,
     type: input.type,
-    entityId: input.shareBatchId,
-    shareBatchId: input.shareBatchId,
+    entityId: input.shareBatchId ?? input.circleId,
+    ...(input.shareBatchId ? { shareBatchId: input.shareBatchId } : {}),
     ...(input.assetId ? { assetId: input.assetId } : {}),
     ...(input.commentId ? { commentId: input.commentId } : {}),
     ...(input.reactionId ? { reactionId: input.reactionId } : {}),
@@ -32,6 +39,9 @@ export async function createActivityEventWithInbox(
     .query('circleMembers')
     .withIndex('by_circle', (q) => q.eq('circleId', input.circleId))
     .take(ACTIVITY_INBOX_RECIPIENT_LIMIT);
+  const pushRecipientIds = input.pushRecipientIds
+    ? new Set<Id<'users'>>(input.pushRecipientIds)
+    : null;
 
   const notificationRecipients: Array<{
     inboxItemId: Id<'activityInboxItems'>;
@@ -48,14 +58,14 @@ export async function createActivityEventWithInbox(
       circleId: input.circleId,
       actorId: input.actorId,
       type: input.type,
-      shareBatchId: input.shareBatchId,
+      ...(input.shareBatchId ? { shareBatchId: input.shareBatchId } : {}),
       ...(input.assetId ? { assetId: input.assetId } : {}),
       status: isActor ? 'read' : 'unread',
       ...(isActor ? { readAt: input.createdAt } : {}),
       createdAt: input.createdAt,
     });
 
-    if (!isActor) {
+    if (!isActor && (pushRecipientIds === null || pushRecipientIds.has(membership.userId))) {
       notificationRecipients.push({
         inboxItemId,
         userId: membership.userId,
@@ -68,7 +78,7 @@ export async function createActivityEventWithInbox(
     recipients: notificationRecipients,
     circleId: input.circleId,
     type: input.type,
-    shareBatchId: input.shareBatchId,
+    ...(input.shareBatchId ? { shareBatchId: input.shareBatchId } : {}),
     ...(input.assetId ? { assetId: input.assetId } : {}),
     createdAt: input.createdAt,
   });

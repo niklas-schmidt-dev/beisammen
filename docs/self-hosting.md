@@ -45,6 +45,12 @@ Private and noncommercial self-hosting is allowed under the repository license.
 - links with both `instance` and `invite` switch the active instance before
   storing the invite token locally
 
+## Push notifications
+
+Self-hosted instances can deliver push through the central app's Expo push
+tokens; set `EXPO_PUSH_ENABLED=true` on the Convex deployment. See
+[push-notifications.md](push-notifications.md) for the limits of that mode.
+
 ## Required deployment mode
 
 Set these values on the backend and mobile build that should point at your

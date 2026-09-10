@@ -6,6 +6,28 @@ export interface ExpoPushMessage {
   title: string;
   body: string;
   data: Record<string, string>;
+  /** iOS app icon badge; omitted leaves the badge untouched. */
+  badge?: number;
+  /** Android notification channel created by the app at startup. */
+  channelId?: string;
+  /** Replaces an in-flight or displayed notification with the same key. */
+  collapseId?: string;
+  /** iOS: groups notifications visually in Notification Center. */
+  threadId?: string;
+  sound?: 'default' | null;
+  priority?: 'default' | 'normal' | 'high';
+  /** Seconds the push service keeps trying to deliver to an offline device. */
+  ttl?: number;
+}
+
+/**
+ * Ticket/receipt errors that describe a temporary condition. Attempts stay
+ * queued and are retried by the next cron pass instead of being failed.
+ */
+export const EXPO_TRANSIENT_PUSH_ERRORS = new Set(['MessageRateExceeded']);
+
+export function isTransientExpoError(details: { error?: string } | undefined): boolean {
+  return details?.error !== undefined && EXPO_TRANSIENT_PUSH_ERRORS.has(details.error);
 }
 
 export interface ExpoPushTicket {
