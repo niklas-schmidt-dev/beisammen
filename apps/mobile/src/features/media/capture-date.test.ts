@@ -5,7 +5,7 @@ vi.mock('expo-file-system/legacy', () => ({
 }));
 vi.mock('expo-image-picker', () => ({}));
 vi.mock('expo-location', () => ({}));
-vi.mock('expo-media-library', () => ({}));
+vi.mock('expo-media-library/legacy', () => ({}));
 vi.mock('expo-sharing', () => ({}));
 vi.mock('react-native', () => ({
   Alert: {

@@ -1,10 +1,10 @@
 import * as FileSystem from 'expo-file-system/legacy';
 
-import { normalizeBaseUrl } from '@beisammen/contracts';
 import type { UploadQueueItem } from '@beisammen/upload-client';
 
 import {
   createUploadRecoveryStore,
+  uploadRecoveryInstanceKey,
   type UploadRecoveryFileDriver,
 } from './upload-recovery';
 
@@ -98,7 +98,7 @@ export async function cacheUploadRecoveryFile(input: {
     return null;
   }
 
-  const directory = `${RECOVERY_ROOT}${encodeURIComponent(normalizeBaseUrl(input.instanceUrl))}/${input.shareBatchId}/files/`;
+  const directory = `${RECOVERY_ROOT}${uploadRecoveryInstanceKey(input.instanceUrl)}/${input.shareBatchId}/files/`;
   const targetUri = `${directory}${safeFileName(input.queueId)}-${safeFileName(input.fileName)}`;
 
   await FileSystem.makeDirectoryAsync(directory, {
@@ -131,7 +131,7 @@ export async function prepareUploadEncryptionTargets(input: {
     return null;
   }
 
-  const directory = `${RECOVERY_ROOT}${encodeURIComponent(normalizeBaseUrl(input.instanceUrl))}/${input.shareBatchId}/files/`;
+  const directory = `${RECOVERY_ROOT}${uploadRecoveryInstanceKey(input.instanceUrl)}/${input.shareBatchId}/files/`;
 
   await FileSystem.makeDirectoryAsync(directory, {
     intermediates: true,

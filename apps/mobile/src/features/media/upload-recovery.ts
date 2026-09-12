@@ -33,16 +33,28 @@ interface UploadRecoveryScope {
 
 const RECOVERY_ROOT = 'upload-recovery';
 
-function instanceKey(instanceUrl: string): string {
+/**
+ * Directory name for an instance inside the recovery root. Must not contain
+ * percent-escapes: Android's `Uri.getPath()` decodes them, so a directory
+ * named `https%3A%2F%2Fhost` turns into `https://host` on disk and every
+ * native path round-trip afterwards (image compressor, file info) re-parses
+ * that as a URI scheme and fails. Escapes are therefore mapped to `_`.
+ */
+export function uploadRecoveryInstanceKey(instanceUrl: string): string {
+  return encodeURIComponent(normalizeBaseUrl(instanceUrl)).replace(/%/g, '_');
+}
+
+/** Pre-fix directory name (percent-encoded); only used to clean it up. */
+function legacyInstanceKey(instanceUrl: string): string {
   return encodeURIComponent(normalizeBaseUrl(instanceUrl));
 }
 
 function metadataPath(input: UploadRecoveryScope): string {
-  return `${RECOVERY_ROOT}/${instanceKey(input.instanceUrl)}/${input.shareBatchId}.json`;
+  return `${RECOVERY_ROOT}/${uploadRecoveryInstanceKey(input.instanceUrl)}/${input.shareBatchId}.json`;
 }
 
 function instancePath(instanceUrl: string): string {
-  return `${RECOVERY_ROOT}/${instanceKey(instanceUrl)}`;
+  return `${RECOVERY_ROOT}/${uploadRecoveryInstanceKey(instanceUrl)}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -339,6 +351,10 @@ export function createUploadRecoveryStore(driver: UploadRecoveryFileDriver): Upl
       }
 
       await driver.delete(path);
+      // Percent-encoded directory from before the key change. Its items are
+      // no longer hydrated (Android could never process them anyway), so the
+      // leftover files are removed instead of lingering forever.
+      await driver.delete(`${RECOVERY_ROOT}/${legacyInstanceKey(input.instanceUrl)}`);
     },
 
     async clearItemFiles(item) {

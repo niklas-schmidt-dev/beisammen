@@ -58,7 +58,14 @@ function sanitizeFileName(fileName: string): string {
 }
 
 function normalizeFileUri(uri: string): string {
-  if (uri.startsWith('file://') || uri.startsWith('content://') || uri.startsWith('http')) {
+  if (uri.startsWith('file:')) {
+    // Native helpers (e.g. react-native-compressor on Android) return
+    // `file:/path` with a single slash; expo-file-system and our own
+    // `file://` checks expect the canonical triple slash.
+    return uri.replace(/^file:\/*/, 'file:///');
+  }
+
+  if (uri.startsWith('content://') || uri.startsWith('http')) {
     return uri;
   }
 

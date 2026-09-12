@@ -20,7 +20,7 @@ vi.mock('expo-file-system/legacy', () => ({
 
 vi.mock('expo-image-picker', () => ({}));
 vi.mock('expo-location', () => ({}));
-vi.mock('expo-media-library', () => ({
+vi.mock('expo-media-library/legacy', () => ({
   getAssetInfoAsync: mocks.getAssetInfoAsync,
 }));
 vi.mock('expo-sharing', () => ({}));
@@ -119,6 +119,28 @@ describe('native upload transport', () => {
         asset: {
           ...asset,
           uri: '/cache/photo.jpg',
+        },
+      }),
+    ).resolves.toEqual({
+      objectKey: 'objects/photo.jpg',
+    });
+
+    expect(mocks.getInfoAsync).toHaveBeenCalledWith('file:///cache/photo.jpg');
+    expect(mocks.createUploadTask).toHaveBeenCalledWith(
+      target.uploadUrl,
+      'file:///cache/photo.jpg',
+      expect.any(Object),
+      expect.any(Function),
+    );
+  });
+
+  test('normalizes single-slash file URIs from native helpers', async () => {
+    await expect(
+      uploadPreparedFile({
+        target,
+        asset: {
+          ...asset,
+          uri: 'file:/cache/photo.jpg',
         },
       }),
     ).resolves.toEqual({

@@ -4,6 +4,7 @@ import type { UploadQueueItem } from '@beisammen/upload-client';
 
 import {
   createUploadRecoveryStore,
+  uploadRecoveryInstanceKey,
   type UploadRecoveryFileDriver,
 } from './upload-recovery';
 
@@ -192,7 +193,26 @@ describe('upload recovery store', () => {
       'file:///cache/preview.jpg',
       'file:///recovery/original-encrypted.bin',
       'file:///recovery/preview-encrypted.bin',
-      'upload-recovery/https%3A%2F%2Fone.example.com/share-1.json',
+      'upload-recovery/https_3A_2F_2Fone.example.com/share-1.json',
+    ]);
+  });
+
+  test('instance keys contain no percent-escapes (Android decodes them into path separators)', () => {
+    expect(uploadRecoveryInstanceKey('https://one.example.com/')).toBe(
+      'https_3A_2F_2Fone.example.com',
+    );
+    expect(uploadRecoveryInstanceKey('https://one.example.com')).not.toMatch(/[%/:]/);
+  });
+
+  test('clearing an instance also drops the percent-encoded legacy directory', async () => {
+    const driver = createMemoryDriver();
+    const store = createUploadRecoveryStore(driver);
+
+    await store.clearInstance({ instanceUrl: 'https://one.example.com' });
+
+    expect(driver.deletedUris).toEqual([
+      'upload-recovery/https_3A_2F_2Fone.example.com',
+      'upload-recovery/https%3A%2F%2Fone.example.com',
     ]);
   });
 });
