@@ -37,6 +37,8 @@ export const MAX_PREVIEW_SIZE_BYTES = 5 * 1024 * 1024;
 /** Avatar and circle images (single client-prepared images). */
 export const MAX_IMAGE_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024;
 export const COMMENT_MAX_BODY_LENGTH = 1000;
+/** Share captions are short by design; the composer and the edit flow share this bound. */
+export const SHARE_CAPTION_MAX_LENGTH = 240;
 export const REACTION_TOP_EMOJI_LIMIT = 3;
 
 export const SUPPORTED_IMAGE_MIME_TYPES = [
@@ -118,6 +120,24 @@ export function normalizeCommentBody(body: string): string {
 
   if (normalized.length > COMMENT_MAX_BODY_LENGTH) {
     throw new Error(`Comments must be ${COMMENT_MAX_BODY_LENGTH} characters or shorter.`);
+  }
+
+  return normalized;
+}
+
+/**
+ * Trims a share caption and enforces the length bound. Returns `undefined`
+ * for an empty caption so callers can clear the field instead of storing ''.
+ */
+export function normalizeShareCaption(caption: string | undefined): string | undefined {
+  const normalized = (caption ?? '').replace(/\r\n?/g, '\n').trim();
+
+  if (normalized.length === 0) {
+    return undefined;
+  }
+
+  if (normalized.length > SHARE_CAPTION_MAX_LENGTH) {
+    throw new Error(`Captions must be ${SHARE_CAPTION_MAX_LENGTH} characters or shorter.`);
   }
 
   return normalized;

@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { T, useGT } from 'gt-react-native';
 import { memo, useCallback, useMemo } from 'react';
 import {
+  Alert,
   Platform,
   Pressable,
   StyleSheet,
@@ -174,6 +175,7 @@ interface FeedCardProps {
   currentProfileImage?: AvatarImage;
   isDeleting?: boolean;
   onOpenShare: (shareId: string) => void;
+  onEditShare: (shareId: string) => void;
   onDeleteShare: (shareId: string) => void;
 }
 
@@ -183,6 +185,7 @@ export const FeedCard = memo(function FeedCard({
   currentProfileImage,
   isDeleting = false,
   onOpenShare,
+  onEditShare,
   onDeleteShare,
 }: FeedCardProps) {
   const theme = useTheme();
@@ -202,6 +205,19 @@ export const FeedCard = memo(function FeedCard({
 
   const handlePress = useCallback(() => onOpenShare(share._id), [onOpenShare, share._id]);
   const handleDelete = useCallback(() => onDeleteShare(share._id), [onDeleteShare, share._id]);
+  const handleEdit = useCallback(() => onEditShare(share._id), [onEditShare, share._id]);
+  const handleOpenMenu = useCallback(() => {
+    if (!share.canEdit) {
+      handleDelete();
+      return;
+    }
+
+    Alert.alert(gt('Beitrag'), undefined, [
+      { text: gt('Text bearbeiten'), onPress: handleEdit },
+      { text: gt('Beitrag löschen'), style: 'destructive', onPress: handleDelete },
+      { text: gt('Abbrechen'), style: 'cancel' },
+    ]);
+  }, [gt, handleDelete, handleEdit, share.canEdit]);
 
   const customAuthorImage = useUserProfileImage(
     share.authorId,
@@ -316,16 +332,17 @@ export const FeedCard = memo(function FeedCard({
             numberOfLines={1}
           >
             {share.createdAtLabel}
+            {share.editedAt ? ` · ${gt('bearbeitet')}` : ''}
           </Text>
         </View>
 
-        {share.canDelete ? (
+        {share.canEdit || share.canDelete ? (
           <Pressable
             hitSlop={12}
             disabled={isDeleting}
-            onPress={handleDelete}
+            onPress={handleOpenMenu}
             accessibilityRole="button"
-            accessibilityLabel={gt('Beitrag löschen')}
+            accessibilityLabel={gt('Beitragsoptionen')}
             style={({ pressed }) => [
               styles.moreButton,
               {

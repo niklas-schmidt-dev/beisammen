@@ -32,5 +32,11 @@ describe('engagement validation', () => {
         assetId: 'asset 2',
       }),
     ).toBe('/share/share%2F1?assetId=asset%202');
+    expect(buildShareDetailHref({ shareBatchId: 'share-1', edit: true })).toBe(
+      '/share/share-1?edit=1',
+    );
+    expect(
+      buildShareDetailHref({ shareBatchId: 'share-1', assetId: 'asset-2', edit: true }),
+    ).toBe('/share/share-1?assetId=asset-2&edit=1');
   });
 });

@@ -155,6 +155,8 @@ export interface ShareFeedItem {
   authorProfileImageKey?: string;
   createdAtLabel: string;
   publishedAt: number;
+  editedAt: number | null;
+  canEdit: boolean;
   canDelete: boolean;
   engagement: EngagementSummary;
   heroAsset: ShareAssetRecord | null;
@@ -173,6 +175,8 @@ export interface ShareBatchRecord {
   authorProfileImageKey?: string;
   createdAtLabel: string;
   publishedAt: number;
+  editedAt: number | null;
+  canEdit: boolean;
   canDelete: boolean;
   engagement: EngagementSummary;
   shareTargetEngagement: EngagementSummary;
@@ -194,6 +198,8 @@ export interface CommentRecord {
   body: string;
   createdAt: number;
   updatedAt: number;
+  editedAt: number | null;
+  canEdit: boolean;
   canDelete: boolean;
 }
 
@@ -642,6 +648,11 @@ export const api = {
       PublishArgs,
       { shareBatchId: string; assetCount: number }
     >('shares:publish'),
+    updateCaption: makeFunctionReference<
+      'mutation',
+      { shareBatchId: string; caption?: string },
+      { shareBatchId: string }
+    >('shares:updateCaption'),
     listForCircle: makeFunctionReference<
       'query',
       { circleId: string; paginationOpts: PaginationOpts },
@@ -699,6 +710,11 @@ export const api = {
     create: makeFunctionReference<'mutation', CreateCommentArgs, { commentId: string }>(
       'comments:create',
     ),
+    update: makeFunctionReference<
+      'mutation',
+      { commentId: string; body: string },
+      { commentId: string }
+    >('comments:update'),
     delete: makeFunctionReference<'mutation', { commentId: string }, { commentId: string }>(
       'comments:delete',
     ),

@@ -444,6 +444,34 @@ export async function createMemoryItemsForPublishedShare(
   return { inserted };
 }
 
+/**
+ * Keeps the denormalized caption on a share's memory items in step with the
+ * share itself after the author edits it post-publish.
+ */
+export async function syncMemoryItemCaptionsForShare(
+  ctx: MutationCtx,
+  input: {
+    shareBatchId: Id<'shareBatches'>;
+    caption: string | undefined;
+  },
+) {
+  const items = await ctx.db
+    .query('memoryItems')
+    .withIndex('by_share_batch', (q) => q.eq('shareBatchId', input.shareBatchId))
+    .take(MEMORY_ASSET_BATCH_LIMIT);
+  const caption = input.caption?.trim() || undefined;
+
+  for (const item of items) {
+    if (item.caption === caption) {
+      continue;
+    }
+
+    await ctx.db.patch(item._id, { caption });
+  }
+
+  return { updated: items.length };
+}
+
 export const backfillBatch = internalMutation({
   args: {
     cursor: v.optional(v.union(v.string(), v.null())),

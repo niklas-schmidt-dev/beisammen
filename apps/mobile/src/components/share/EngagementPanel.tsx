@@ -32,12 +32,97 @@ const COMMENT_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
   timeStyle: 'short',
 };
 
+/** Inline editor shown in place of a comment's body while the author edits it. */
+function CommentEditor({
+  initialBody,
+  isSaving,
+  onCancel,
+  onSave,
+}: {
+  initialBody: string;
+  isSaving: boolean;
+  onCancel: () => void;
+  onSave: (body: string) => void;
+}) {
+  const theme = useTheme();
+  const gt = useGT();
+  const [body, setBody] = useState(initialBody);
+  const canSave = !isSaving && body.trim().length > 0 && body.trim() !== initialBody.trim();
+
+  return (
+    <View style={styles.editor}>
+      <TextInput
+        accessibilityLabel={gt('Kommentar bearbeiten')}
+        value={body}
+        onChangeText={setBody}
+        autoFocus
+        multiline
+        maxLength={COMMENT_MAX_BODY_LENGTH}
+        editable={!isSaving}
+        placeholderTextColor={theme.textTertiary}
+        style={[
+          styles.composerInput,
+          styles.editorInput,
+          {
+            borderColor: theme.border,
+            color: theme.text,
+            backgroundColor: theme.background,
+          },
+        ]}
+      />
+      <View style={styles.editorActions}>
+        <Text style={[styles.composerLimit, styles.editorLimit, { color: theme.textTertiary }]}>
+          {body.length}/{COMMENT_MAX_BODY_LENGTH}
+        </Text>
+        <AnimatedPressable
+          accessibilityRole="button"
+          accessibilityLabel={gt('Abbrechen')}
+          disabled={isSaving}
+          onPress={onCancel}
+          pressedScale={0.96}
+          style={[styles.editorButton, { backgroundColor: theme.surfacePressed }]}
+        >
+          <Text style={[styles.editorButtonText, { color: theme.textSecondary }]}>
+            {gt('Abbrechen')}
+          </Text>
+        </AnimatedPressable>
+        <AnimatedPressable
+          accessibilityRole="button"
+          accessibilityLabel={gt('Speichern')}
+          disabled={!canSave}
+          onPress={() => onSave(body)}
+          pressedScale={0.96}
+          style={[styles.editorButton, { backgroundColor: theme.primary }]}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color={theme.primaryText} />
+          ) : (
+            <Text style={[styles.editorButtonText, { color: theme.primaryText }]}>
+              {gt('Speichern')}
+            </Text>
+          )}
+        </AnimatedPressable>
+      </View>
+    </View>
+  );
+}
+
 const CommentRow = memo(function CommentRow({
   comment,
+  isEditing,
+  isSaving,
+  onCancelEdit,
   onDelete,
+  onSaveEdit,
+  onStartEdit,
 }: {
   comment: CommentRecord;
+  isEditing: boolean;
+  isSaving: boolean;
+  onCancelEdit: () => void;
   onDelete: (comment: CommentRecord) => void;
+  onSaveEdit: (comment: CommentRecord, body: string) => void;
+  onStartEdit: (comment: CommentRecord) => void;
 }) {
   const theme = useTheme();
   const gt = useGT();
@@ -55,8 +140,19 @@ const CommentRow = memo(function CommentRow({
           </Text>
           <Text style={[styles.commentTime, { color: theme.textTertiary }]}>
             {commentTimeFormat.format(new Date(comment.createdAt))}
+            {comment.editedAt ? ` · ${gt('bearbeitet')}` : ''}
           </Text>
-          {comment.canDelete ? (
+          {comment.canEdit && !isEditing ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={gt('Kommentar bearbeiten')}
+              hitSlop={10}
+              onPress={() => onStartEdit(comment)}
+            >
+              <Ionicons name="pencil-outline" size={14} color={theme.textTertiary} />
+            </Pressable>
+          ) : null}
+          {comment.canDelete && !isEditing ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={gt('Kommentar entfernen')}
@@ -67,7 +163,16 @@ const CommentRow = memo(function CommentRow({
             </Pressable>
           ) : null}
         </View>
-        <Text style={[styles.commentBody, { color: theme.textSecondary }]}>{comment.body}</Text>
+        {isEditing ? (
+          <CommentEditor
+            initialBody={comment.body}
+            isSaving={isSaving}
+            onCancel={onCancelEdit}
+            onSave={(body) => onSaveEdit(comment, body)}
+          />
+        ) : (
+          <Text style={[styles.commentBody, { color: theme.textSecondary }]}>{comment.body}</Text>
+        )}
       </View>
     </View>
   );
@@ -129,6 +234,8 @@ export const EngagementPanel = memo(function EngagementPanel({
   const [engagementScope, setEngagementScope] = useState<'share' | 'asset'>('share');
   const [commentDraft, setCommentDraft] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const hasMultipleAssets = share.assets.length > 1;
 
@@ -149,6 +256,7 @@ export const EngagementPanel = memo(function EngagementPanel({
     { initialNumItems: 20 },
   );
   const createComment = useMutation(api.comments.create);
+  const updateComment = useMutation(api.comments.update);
   const deleteComment = useMutation(api.comments.delete);
 
   useEffect(() => {
@@ -177,6 +285,33 @@ export const EngagementPanel = memo(function EngagementPanel({
       setIsSubmittingComment(false);
     }
   }, [commentDraft, commentTarget, createComment, gt, onFeedback]);
+
+  const handleStartEdit = useCallback((comment: CommentRecord) => {
+    setEditingCommentId(comment._id);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingCommentId(null);
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (comment: CommentRecord, body: string) => {
+      setIsSavingEdit(true);
+      onFeedback(null);
+
+      try {
+        await updateComment({ commentId: comment._id, body: normalizeCommentBody(body) });
+        setEditingCommentId(null);
+      } catch (error) {
+        onFeedback(
+          error instanceof Error ? error.message : gt('Kommentar konnte nicht gespeichert werden.'),
+        );
+      } finally {
+        setIsSavingEdit(false);
+      }
+    },
+    [gt, onFeedback, updateComment],
+  );
 
   const handleDeleteComment = useCallback(
     (comment: CommentRecord) => {
@@ -302,7 +437,17 @@ export const EngagementPanel = memo(function EngagementPanel({
               {index > 0 ? (
                 <View style={[styles.separator, { backgroundColor: theme.borderLight }]} />
               ) : null}
-              <CommentRow comment={comment} onDelete={handleDeleteComment} />
+              <CommentRow
+                comment={comment}
+                isEditing={editingCommentId === comment._id}
+                isSaving={isSavingEdit && editingCommentId === comment._id}
+                onCancelEdit={handleCancelEdit}
+                onDelete={handleDeleteComment}
+                onSaveEdit={(target, body) => {
+                  void handleSaveEdit(target, body);
+                }}
+                onStartEdit={handleStartEdit}
+              />
             </View>
           ))
         ) : (
@@ -433,6 +578,36 @@ const styles = StyleSheet.create({
   commentBody: {
     fontSize: FontSize.base,
     lineHeight: 21,
+  },
+  editor: {
+    gap: Spacing.xs,
+    marginTop: 2,
+  },
+  editorInput: {
+    flex: 0,
+  },
+  editorActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: Spacing.xs,
+  },
+  editorLimit: {
+    flex: 1,
+    alignSelf: 'center',
+    marginTop: 0,
+  },
+  editorButton: {
+    minWidth: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 9,
+  },
+  editorButtonText: {
+    fontSize: FontSize.sm,
+    fontWeight: '700',
   },
   emptyText: {
     fontSize: FontSize.sm,

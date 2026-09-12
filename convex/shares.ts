@@ -1,6 +1,6 @@
 import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
-import type { EngagementSummary } from '@beisammen/contracts';
+import { normalizeShareCaption, type EngagementSummary } from '@beisammen/contracts';
 
 import type { Doc, Id } from './_generated/dataModel';
 import type { ActionCtx, MutationCtx, QueryCtx } from './_generated/server';
@@ -24,6 +24,7 @@ import { createActivityEventWithInbox } from './lib/activity';
 import {
   createMemoryItemsForPublishedShare,
   removeMemoryItemFromDiscoverySummaries,
+  syncMemoryItemCaptionsForShare,
 } from './memories';
 import { deleteStorageReference, storageReferenceKey } from './legacyStorage';
 import { getDeploymentPolicyFromEnv } from './lib/instance';
@@ -185,6 +186,8 @@ async function buildPublishedShareRecord(
     authorProfileImageKey: imageCacheKey(author?.profileImageStorage),
     createdAtLabel: formatFeedTimestamp(shareBatch.publishedAt ?? shareBatch.createdAt),
     publishedAt: shareBatch.publishedAt ?? shareBatch.createdAt,
+    editedAt: shareBatch.editedAt ?? null,
+    canEdit: shareBatch.authorId === viewerId,
     canDelete: shareBatch.authorId === viewerId,
     engagement,
     shareTargetEngagement,
@@ -214,6 +217,8 @@ async function buildFeedShareRecord(
     authorProfileImageKey: imageCacheKey(author?.profileImageStorage),
     createdAtLabel: formatFeedTimestamp(shareBatch.publishedAt ?? shareBatch.createdAt),
     publishedAt: shareBatch.publishedAt ?? shareBatch.createdAt,
+    editedAt: shareBatch.editedAt ?? null,
+    canEdit: shareBatch.authorId === viewerId,
     canDelete: shareBatch.authorId === viewerId,
     engagement,
     heroAsset,
@@ -391,6 +396,50 @@ export const publish = mutation({
       shareBatchId: shareBatch._id,
       assetCount: Math.max(shareBatch.assetCount, 1),
     };
+  },
+});
+
+export const updateCaption = mutation({
+  args: {
+    shareBatchId: v.id('shareBatches'),
+    caption: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await requireViewer(ctx);
+    const shareBatch = await ctx.db.get(args.shareBatchId);
+
+    if (!shareBatch) {
+      throw new Error('Share batch not found.');
+    }
+
+    await requireCircleMembership(ctx, viewer._id, shareBatch.circleId);
+
+    if (shareBatch.authorId !== viewer._id) {
+      throw new Error('Only the author can edit this share.');
+    }
+
+    if (shareBatch.status !== 'published') {
+      throw new Error('Only published shares can be edited here.');
+    }
+
+    const caption = normalizeShareCaption(args.caption);
+
+    if (caption === shareBatch.caption) {
+      return { shareBatchId: shareBatch._id };
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(shareBatch._id, {
+      caption,
+      updatedAt: now,
+      editedAt: now,
+    });
+    await syncMemoryItemCaptionsForShare(ctx, {
+      shareBatchId: shareBatch._id,
+      caption,
+    });
+
+    return { shareBatchId: shareBatch._id };
   },
 });
 

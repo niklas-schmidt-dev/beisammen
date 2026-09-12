@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -18,8 +19,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGT } from 'gt-react-native';
 
-import { useAction, useConvexAuth, useQuery } from 'convex/react';
+import { useAction, useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { VideoView } from 'expo-video';
+import { SHARE_CAPTION_MAX_LENGTH, normalizeShareCaption } from '@beisammen/contracts';
 
 import { Fonts, FontSize, Radius, Spacing } from '@/constants/theme';
 import type { ShareAssetRecord } from '@/features/convex/api';
@@ -78,6 +80,79 @@ function CaptionBlock({
       {tail ? (
         <Text style={[styles.captionTail, { color: accentColor }]}>{tail}</Text>
       ) : null}
+    </View>
+  );
+}
+
+/** Replaces the caption block while the author rewrites the post text. */
+function CaptionEditor({
+  initialCaption,
+  isSaving,
+  onCancel,
+  onSave,
+}: {
+  initialCaption: string;
+  isSaving: boolean;
+  onCancel: () => void;
+  onSave: (caption: string) => void;
+}) {
+  const theme = useTheme();
+  const gt = useGT();
+  const [caption, setCaption] = useState(initialCaption);
+  const canSave = !isSaving && caption.trim() !== initialCaption.trim();
+
+  return (
+    <View
+      style={[
+        styles.captionEditor,
+        { backgroundColor: theme.surface, borderColor: theme.borderLight },
+      ]}
+    >
+      <TextInput
+        accessibilityLabel={gt('Beitragstext')}
+        value={caption}
+        onChangeText={setCaption}
+        placeholder={gt('Schreib etwas dazu...')}
+        placeholderTextColor={theme.textTertiary}
+        autoFocus
+        multiline
+        maxLength={SHARE_CAPTION_MAX_LENGTH}
+        editable={!isSaving}
+        style={[styles.captionEditorInput, { color: theme.text }]}
+      />
+      <View style={styles.captionEditorActions}>
+        <Text style={[styles.captionEditorCounter, { color: theme.textTertiary }]}>
+          {caption.length}/{SHARE_CAPTION_MAX_LENGTH}
+        </Text>
+        <AnimatedPressable
+          accessibilityRole="button"
+          accessibilityLabel={gt('Abbrechen')}
+          disabled={isSaving}
+          onPress={onCancel}
+          pressedScale={0.96}
+          style={[styles.captionEditorButton, { backgroundColor: theme.surfacePressed }]}
+        >
+          <Text style={[styles.captionEditorButtonText, { color: theme.textSecondary }]}>
+            {gt('Abbrechen')}
+          </Text>
+        </AnimatedPressable>
+        <AnimatedPressable
+          accessibilityRole="button"
+          accessibilityLabel={gt('Speichern')}
+          disabled={!canSave}
+          onPress={() => onSave(caption)}
+          pressedScale={0.96}
+          style={[styles.captionEditorButton, { backgroundColor: theme.primary }]}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color={theme.primaryText} />
+          ) : (
+            <Text style={[styles.captionEditorButtonText, { color: theme.primaryText }]}>
+              {gt('Speichern')}
+            </Text>
+          )}
+        </AnimatedPressable>
+      </View>
     </View>
   );
 }
@@ -294,9 +369,11 @@ export default function ShareDetailScreen() {
   const params = useLocalSearchParams<{
     shareId?: string | string[];
     assetId?: string | string[];
+    edit?: string | string[];
   }>();
   const shareId = Array.isArray(params.shareId) ? params.shareId[0] : params.shareId;
   const requestedAssetId = Array.isArray(params.assetId) ? params.assetId[0] : params.assetId;
+  const requestedEdit = (Array.isArray(params.edit) ? params.edit[0] : params.edit) === '1';
   const theme = useTheme();
   const gt = useGT();
   const pathname = usePathname();
@@ -322,6 +399,7 @@ export default function ShareDetailScreen() {
   );
   const getReadUrl = useAction(api.assets.getReadUrl);
   const deleteShare = useAction(api.shares.delete);
+  const updateCaption = useMutation(api.shares.updateCaption);
 
   const [activeAssetId, setActiveAssetId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -329,6 +407,9 @@ export default function ShareDetailScreen() {
   const [isSharing, setIsSharing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  // Opened via the feed's "Text bearbeiten" menu entry, or the pencil here.
+  const [isEditingCaption, setIsEditingCaption] = useState(requestedEdit);
+  const [isSavingCaption, setIsSavingCaption] = useState(false);
   const pagerRef = useRef<FlatList<ShareAssetRecord>>(null);
 
   useEffect(() => {
@@ -443,6 +524,32 @@ export default function ShareDetailScreen() {
     }
   }, [deleteShare, gt, router, share]);
 
+  const handleSaveCaption = useCallback(
+    async (caption: string) => {
+      if (!share) {
+        return;
+      }
+
+      setIsSavingCaption(true);
+      try {
+        const normalized = normalizeShareCaption(caption);
+        await updateCaption({
+          shareBatchId: share._id,
+          ...(normalized !== undefined ? { caption: normalized } : {}),
+        });
+        setIsEditingCaption(false);
+        setFeedback(gt('Beitragstext wurde gespeichert.'));
+      } catch (error) {
+        setFeedback(
+          error instanceof Error ? error.message : gt('Beitragstext konnte nicht gespeichert werden.'),
+        );
+      } finally {
+        setIsSavingCaption(false);
+      }
+    },
+    [gt, share, updateCaption],
+  );
+
   const handleDelete = useCallback(() => {
     if (!share?.canDelete) {
       return;
@@ -525,17 +632,33 @@ export default function ShareDetailScreen() {
             <View style={styles.circleLabelPlaceholder} />
           )}
 
-          {share.canDelete ? (
-            <AnimatedPressable
-              accessibilityRole="button"
-              accessibilityLabel={gt('Beitrag löschen')}
-              disabled={isDeleting}
-              onPress={handleDelete}
-              pressedScale={0.92}
-              style={[styles.iconButton, { backgroundColor: theme.dangerMuted }]}
-            >
-              <Ionicons name="trash-outline" size={18} color={theme.danger} />
-            </AnimatedPressable>
+          {share.canEdit || share.canDelete ? (
+            <View style={styles.headerActions}>
+              {share.canEdit ? (
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel={gt('Beitragstext bearbeiten')}
+                  disabled={isEditingCaption || isDeleting}
+                  onPress={() => setIsEditingCaption(true)}
+                  pressedScale={0.92}
+                  style={[styles.iconButton, { backgroundColor: theme.surfacePressed }]}
+                >
+                  <Ionicons name="pencil-outline" size={18} color={theme.text} />
+                </AnimatedPressable>
+              ) : null}
+              {share.canDelete ? (
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel={gt('Beitrag löschen')}
+                  disabled={isDeleting}
+                  onPress={handleDelete}
+                  pressedScale={0.92}
+                  style={[styles.iconButton, { backgroundColor: theme.dangerMuted }]}
+                >
+                  <Ionicons name="trash-outline" size={18} color={theme.danger} />
+                </AnimatedPressable>
+              ) : null}
+            </View>
           ) : (
             <View style={styles.iconButtonPlaceholder}>
               <Ionicons name="lock-closed-outline" size={16} color={theme.textSecondary} />
@@ -645,11 +768,21 @@ export default function ShareDetailScreen() {
               </Text>
               <Text style={[styles.timestamp, { color: theme.textTertiary }]} numberOfLines={1}>
                 {share.createdAtLabel}
+                {share.editedAt ? ` · ${gt('bearbeitet')}` : ''}
               </Text>
             </View>
           </View>
 
-          {share.caption ? (
+          {isEditingCaption && share.canEdit ? (
+            <CaptionEditor
+              initialCaption={share.caption}
+              isSaving={isSavingCaption}
+              onCancel={() => setIsEditingCaption(false)}
+              onSave={(caption) => {
+                void handleSaveCaption(caption);
+              }}
+            />
+          ) : share.caption ? (
             <CaptionBlock caption={share.caption} accentColor={theme.accent} baseColor={theme.text} />
           ) : null}
 
@@ -702,6 +835,11 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     marginLeft: -6,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   iconButton: {
     width: 40,
@@ -879,5 +1017,40 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.4,
+  },
+  captionEditor: {
+    borderWidth: 1,
+    borderRadius: Radius.xl,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  captionEditorInput: {
+    fontSize: FontSize.md,
+    lineHeight: 26,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  captionEditorActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  captionEditorCounter: {
+    flex: 1,
+    fontFamily: Fonts.mono,
+    fontSize: FontSize.xs,
+    letterSpacing: 0.5,
+  },
+  captionEditorButton: {
+    minWidth: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 9,
+  },
+  captionEditorButtonText: {
+    fontSize: FontSize.sm,
+    fontWeight: '700',
   },
 });

@@ -19,12 +19,10 @@ import type { CircleUploadReadiness } from '@beisammen/contracts';
 import { BottomTabInset, Fonts, FontSize, Spacing } from '@/constants/theme';
 import { enterListItem, enterSection } from '@/lib/motion';
 import { useSession } from '@/features/auth/session-provider';
-import type { ActivityEventRecord } from '@/features/convex/api';
 import { api } from '@/features/convex/api';
 import { useCrypto } from '@/features/crypto/provider';
 import { useCircleKeys } from '@/features/crypto/use-circle-keys';
 import { buildShareDetailHref } from '@/features/engagement/navigation';
-import { buildActivityHref } from '@/features/notifications/navigation';
 import { uploadBlockerNotice } from '@/features/media/upload-readiness';
 import { useProfileImage } from '@/features/media/use-profile-image-url';
 import { useShareUploadFlow } from '@/features/media/use-share-upload-flow';
@@ -35,7 +33,6 @@ import { createLogger } from '@/lib/logger';
 
 import { Button, EmptyState, FeedbackToast, LoadingBox } from '@/components/ui';
 import { CelebrationBurst } from '@/components/onboarding/CelebrationBurst';
-import { ActivityStrip } from '@/components/home/ActivityStrip';
 import { CircleSelector } from '@/components/home/CircleSelector';
 import { ComposeFab } from '@/components/home/ComposeFab';
 import { DraftSheet } from '@/components/home/DraftSheet';
@@ -82,11 +79,6 @@ export default function HomeScreen() {
     api.shares.listForCircle,
     hasViewer && resolvedCircleId ? { circleId: resolvedCircleId } : 'skip',
     { initialNumItems: 10 },
-  );
-  const activityFeed = usePaginatedQuery(
-    api.activity.listForViewer,
-    hasViewer ? {} : 'skip',
-    { initialNumItems: 6 },
   );
   const activeDraft = useQuery(
     api.shares.getDraftForCircle,
@@ -207,7 +199,6 @@ export default function HomeScreen() {
     );
 
   const feedItems = shareFeed.results;
-  const activityItems = hasViewer ? activityFeed.results : [];
   const isFeedLoading = Boolean(resolvedCircleId) && shareFeed.status === 'LoadingFirstPage';
   const isLoadingMoreFeed = shareFeed.status === 'LoadingMore';
   const visiblePersistedUploads =
@@ -380,11 +371,11 @@ export default function HomeScreen() {
       router.push(buildShareDetailHref({ shareBatchId: shareId, assetId }) as never),
     [router],
   );
-  const handleOpenActivity = useCallback(
-    (activity: ActivityEventRecord) => router.push(buildActivityHref(activity) as never),
+  const handleEditShare = useCallback(
+    (shareId: string) =>
+      router.push(buildShareDetailHref({ shareBatchId: shareId, edit: true }) as never),
     [router],
   );
-
   const handleOpenSettings = useCallback(() => {
     router.push('/settings' as never);
   }, [router]);
@@ -498,17 +489,6 @@ export default function HomeScreen() {
             </Animated.View>
           ) : null}
 
-          {hasCircles ? (
-            <Animated.View entering={enterSection(2)} style={styles.activitySection}>
-              <ActivityStrip
-                activities={activityItems}
-                status={activityFeed.status}
-                onOpenActivity={handleOpenActivity}
-                onOpenActivityTab={() => router.push('/activity' as never)}
-              />
-            </Animated.View>
-          ) : null}
-
           {/* Feed */}
           <Animated.View entering={enterSection(2)} style={styles.feedSection}>
             {isViewerBootstrapping || circles === undefined || isCirclesLoading ? (
@@ -562,6 +542,7 @@ export default function HomeScreen() {
                         currentProfileImage={profileImage}
                         isDeleting={deletingShareId === share._id}
                         onOpenShare={handleOpenShare}
+                        onEditShare={handleEditShare}
                         onDeleteShare={handleDeletePublishedShare}
                       />
                     </Animated.View>
@@ -675,10 +656,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   feedSection: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-  },
-  activitySection: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
   },

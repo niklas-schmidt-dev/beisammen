@@ -221,6 +221,8 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     publishedAt: v.optional(v.number()),
+    // Set when the author changes the caption after publishing.
+    editedAt: v.optional(v.number()),
   })
     .index('by_circle', ['circleId'])
     .index('by_author', ['authorId'])
@@ -512,6 +514,8 @@ export default defineSchema({
     status: v.union(v.literal('active'), v.literal('deleted')),
     createdAt: v.number(),
     updatedAt: v.number(),
+    // Set when the author changes the body after posting.
+    editedAt: v.optional(v.number()),
     deletedAt: v.optional(v.number()),
   })
     .index('by_share_batch', ['shareBatchId'])

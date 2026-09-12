@@ -3240,6 +3240,165 @@ describe('shares, uploads, and feed', () => {
     expect(remaining.page).toEqual([]);
   });
 
+  test('comment authors can edit their own comments and the edit is flagged', async () => {
+    const t = createTestDb();
+    const owner = await createCircleFor(t, 'owner@example.com');
+    const adminInvite = await owner.user.mutation(api.invites.create, {
+      circleId: owner.circleId,
+      invitedEmail: 'admin@example.com',
+      role: 'admin',
+    });
+    const admin = await upsertViewer(t, 'admin@example.com', 'Admin');
+    await admin.user.mutation(api.invites.accept, { token: adminInvite.token });
+    const published = await createPublishedShare({
+      t,
+      user: owner.user,
+      viewerId: owner.viewer._id,
+      circleId: owner.circleId,
+      fileName: 'edit-comment.jpg',
+    });
+    const adminComment = await admin.user.mutation(api.comments.create, {
+      shareBatchId: published.shareBatchId,
+      body: 'Original text.',
+    });
+
+    const before = await admin.user.query(api.comments.listForShare, {
+      shareBatchId: published.shareBatchId,
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    expect(before.page).toMatchObject([
+      { _id: adminComment.commentId, body: 'Original text.', editedAt: null, canEdit: true },
+    ]);
+
+    // Neither the share author nor the circle owner may rewrite someone else's comment.
+    await expect(
+      owner.user.mutation(api.comments.update, {
+        commentId: adminComment.commentId,
+        body: 'Rewritten by owner.',
+      }),
+    ).rejects.toThrow(/edit/i);
+
+    await expect(
+      admin.user.mutation(api.comments.update, {
+        commentId: adminComment.commentId,
+        body: '  Fixed text.\r\n',
+      }),
+    ).resolves.toEqual({ commentId: adminComment.commentId });
+
+    const after = await owner.user.query(api.comments.listForShare, {
+      shareBatchId: published.shareBatchId,
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    expect(after.page).toMatchObject([
+      {
+        _id: adminComment.commentId,
+        body: 'Fixed text.',
+        editedAt: expect.any(Number),
+        canEdit: false,
+        canDelete: true,
+      },
+    ]);
+
+    await expect(
+      admin.user.mutation(api.comments.update, {
+        commentId: adminComment.commentId,
+        body: '   ',
+      }),
+    ).rejects.toThrow(/required/i);
+
+    await admin.user.mutation(api.comments.delete, { commentId: adminComment.commentId });
+    await expect(
+      admin.user.mutation(api.comments.update, {
+        commentId: adminComment.commentId,
+        body: 'Too late.',
+      }),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  test('share authors can edit a published caption and memory items follow', async () => {
+    const t = createTestDb();
+    const owner = await createCircleFor(t, 'owner@example.com');
+    const invite = await owner.user.mutation(api.invites.create, {
+      circleId: owner.circleId,
+      invitedEmail: 'member@example.com',
+      role: 'member',
+    });
+    const member = await upsertViewer(t, 'member@example.com', 'Member');
+    await member.user.mutation(api.invites.accept, { token: invite.token });
+    const published = await createPublishedShare({
+      t,
+      user: owner.user,
+      viewerId: owner.viewer._id,
+      circleId: owner.circleId,
+      fileName: 'edit-caption.jpg',
+      caption: 'First caption',
+    });
+
+    await expect(
+      owner.user.query(api.shares.getById, { shareBatchId: published.shareBatchId }),
+    ).resolves.toMatchObject({ caption: 'First caption', editedAt: null, canEdit: true });
+    await expect(
+      member.user.query(api.shares.getById, { shareBatchId: published.shareBatchId }),
+    ).resolves.toMatchObject({ canEdit: false, canDelete: false });
+
+    await expect(
+      member.user.mutation(api.shares.updateCaption, {
+        shareBatchId: published.shareBatchId,
+        caption: 'Hijacked',
+      }),
+    ).rejects.toThrow(/author/i);
+
+    await expect(
+      owner.user.mutation(api.shares.updateCaption, {
+        shareBatchId: published.shareBatchId,
+        caption: '  Second caption  ',
+      }),
+    ).resolves.toEqual({ shareBatchId: published.shareBatchId });
+
+    await expect(
+      member.user.query(api.shares.getById, { shareBatchId: published.shareBatchId }),
+    ).resolves.toMatchObject({ caption: 'Second caption', editedAt: expect.any(Number) });
+    const feed = await member.user.query(api.shares.listForCircle, {
+      circleId: owner.circleId,
+      paginationOpts: { numItems: 10, cursor: null },
+    });
+    expect(feed.page).toMatchObject([
+      { _id: published.shareBatchId, caption: 'Second caption', editedAt: expect.any(Number) },
+    ]);
+    await expect(listMemoryRowsForShare({ t, shareBatchId: published.shareBatchId })).resolves.toEqual([
+      expect.objectContaining({ assetId: published.assetId, caption: 'Second caption' }),
+    ]);
+
+    // Clearing the caption removes it from the share and its memory items.
+    await owner.user.mutation(api.shares.updateCaption, {
+      shareBatchId: published.shareBatchId,
+    });
+    await expect(
+      owner.user.query(api.shares.getById, { shareBatchId: published.shareBatchId }),
+    ).resolves.toMatchObject({ caption: '' });
+    const cleared = await listMemoryRowsForShare({ t, shareBatchId: published.shareBatchId });
+    expect(cleared).toHaveLength(1);
+    expect(cleared[0]).not.toHaveProperty('caption');
+
+    await expect(
+      owner.user.mutation(api.shares.updateCaption, {
+        shareBatchId: published.shareBatchId,
+        caption: 'x'.repeat(241),
+      }),
+    ).rejects.toThrow(/240/);
+
+    // Drafts keep using updateDraft; the publish-only editor rejects them.
+    const draft = await owner.user.mutation(api.shares.getOrCreateDraft, {
+      circleId: owner.circleId,
+    });
+    await expect(
+      owner.user.mutation(api.shares.updateCaption, {
+        shareBatchId: draft.shareBatchId as Id<'shareBatches'>,
+        caption: 'Draft text',
+      }),
+    ).rejects.toThrow(/published/i);
+  });
+
   test('share deletion removes comments and reactions with the deleted share', async () => {
     await withDeploymentKind('self-hosted', async () => {
       const t = createTestDb();

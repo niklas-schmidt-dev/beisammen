@@ -53,6 +53,8 @@ async function mapComment(
     body: input.comment.body,
     createdAt: input.comment.createdAt,
     updatedAt: input.comment.updatedAt,
+    editedAt: input.comment.editedAt ?? null,
+    canEdit: input.comment.authorId === input.viewerId,
     canDelete: canDeleteComment(input),
   };
 }
@@ -135,6 +137,53 @@ export const create = mutation({
     });
 
     return { commentId };
+  },
+});
+
+export const update = mutation({
+  args: {
+    commentId: v.id('comments'),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const viewer = await requireViewer(ctx);
+    const comment = await ctx.db.get(args.commentId);
+
+    if (!comment || comment.status !== 'active') {
+      throw new Error('Comment not found.');
+    }
+
+    // Only the author may rewrite a comment; moderators can still delete it.
+    if (comment.authorId !== viewer._id) {
+      throw new Error('You cannot edit this comment.');
+    }
+
+    const shareBatch = await ctx.db.get(comment.shareBatchId);
+
+    if (
+      !shareBatch ||
+      shareBatch.circleId !== comment.circleId ||
+      shareBatch.status !== 'published'
+    ) {
+      throw new Error('Share not found.');
+    }
+
+    await requireCircleMembership(ctx, viewer._id, comment.circleId);
+
+    const body = normalizeCommentBody(args.body);
+
+    if (body === comment.body) {
+      return { commentId: comment._id };
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(comment._id, {
+      body,
+      updatedAt: now,
+      editedAt: now,
+    });
+
+    return { commentId: comment._id };
   },
 });
 
