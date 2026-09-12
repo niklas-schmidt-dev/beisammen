@@ -11,7 +11,7 @@ import { isAppVersionSupported } from '@beisammen/contracts';
 import { Button } from '@/components/ui';
 import { Fonts, FontSize, Spacing } from '@/constants/theme';
 import { api, type AppClientConfig } from '@/features/convex/api';
-import { useOtaUpdates } from '@/features/app-config/use-ota-updates';
+import { reloadWithBrandedScreen, useOtaUpdates } from '@/features/app-config/use-ota-updates';
 import { useTheme } from '@/hooks/use-theme';
 import { appEnv } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
@@ -97,7 +97,7 @@ function UpdateRequiredScreen({ config }: { config: AppClientConfig }) {
             <Button
               label={gt('Neu starten')}
               icon="refresh-outline"
-              onPress={() => void Updates.reloadAsync()}
+              onPress={() => void reloadWithBrandedScreen()}
             />
           ) : null}
           <Button

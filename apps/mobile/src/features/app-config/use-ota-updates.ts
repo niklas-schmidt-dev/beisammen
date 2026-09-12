@@ -1,11 +1,36 @@
 import * as Updates from 'expo-updates';
 import { useEffect, useRef } from 'react';
-import { AppState } from 'react-native';
+import { Appearance, AppState } from 'react-native';
 
+import { Colors } from '@/constants/theme';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('appConfig.ota');
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
+
+/**
+ * The native reload screen expo-updates shows while swapping bundles defaults
+ * to a white background with a system-blue spinner, ignoring dark mode. Match
+ * it to the brand palette of the current color scheme instead.
+ */
+export function buildReloadScreenOptions(): Updates.ReloadScreenOptions {
+  const palette = Appearance.getColorScheme() === 'dark' ? Colors.dark : Colors.light;
+
+  return {
+    backgroundColor: palette.background,
+    fade: true,
+    spinner: {
+      enabled: true,
+      color: palette.primary,
+      size: 'medium',
+    },
+  };
+}
+
+/** Reloads into the downloaded update with the branded reload screen. */
+export async function reloadWithBrandedScreen(): Promise<void> {
+  await Updates.reloadAsync({ reloadScreenOptions: buildReloadScreenOptions() });
+}
 
 /**
  * Checks for OTA updates on launch and whenever the app returns to the
@@ -34,7 +59,7 @@ export function useOtaUpdates(): void {
       logger.info('Applying OTA update', { reason });
 
       try {
-        await Updates.reloadAsync();
+        await reloadWithBrandedScreen();
       } catch (error) {
         logger.warn('OTA reload failed, applies on next launch', { error });
       }
