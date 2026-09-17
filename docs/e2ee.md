@@ -178,9 +178,12 @@ per instance on sign-out as before.
 
 ## Known gaps
 
-- Circle cover images still use the legacy plaintext image pipeline
-  (`imageUploads`, no BSE1 envelope) — the server and storage operator can
-  read them. Moving covers onto the encrypted pipeline needs a schema +
-  read-path migration and is open.
+- Circle cover images and user profile images still use the legacy plaintext
+  image pipeline (`imageUploads`, no BSE1 envelope) — the server and storage
+  operator can read them. They are served through short-lived presigned URLs
+  and cached on-device by expo-image under the storage object key; the
+  fullscreen avatar view reuses that same source, so it adds no new plaintext
+  on disk. Moving them onto the encrypted pipeline needs a schema + read-path
+  migration and is open.
 - No end-to-end authentication of member identity keys (see "Epochs and
   membership" above).

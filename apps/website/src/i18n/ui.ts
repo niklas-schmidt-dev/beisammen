@@ -85,6 +85,8 @@ type Dictionary = {
     invalidTitle: string;
     invalidLede: string;
     openApp: string;
+    copyLink: string;
+    copied: string;
     installTitle: string;
     installBody: string;
     afterInstall: string;
@@ -235,8 +237,10 @@ export const dict: Record<Locale, Dictionary> = {
       invalidTitle: 'This link is incomplete.',
       invalidLede: 'It contains neither an invitation nor an instance. Ask the person who invited you to share the link again.',
       openApp: 'Open in the app',
+      copyLink: 'Copy link',
+      copied: 'Copied',
       installTitle: 'Don’t have the app yet?',
-      installBody: 'Install beisammen, then come back and open this link again — the invitation will be picked up.',
+      installBody: 'Install beisammen, then paste the invite link or code into “Join circle” — or come back and open this link again.',
       afterInstall: 'Invite links are single-use and only work in the app.',
     },
   },
@@ -383,8 +387,10 @@ export const dict: Record<Locale, Dictionary> = {
       invalidTitle: 'Dieser Link ist unvollständig.',
       invalidLede: 'Er enthält weder eine Einladung noch eine Instanz. Bitte die Person, die dich eingeladen hat, den Link erneut zu teilen.',
       openApp: 'In der App öffnen',
+      copyLink: 'Link kopieren',
+      copied: 'Kopiert',
       installTitle: 'Noch keine App?',
-      installBody: 'Installiere beisammen, komm dann hierher zurück und öffne den Link noch einmal – die Einladung wird übernommen.',
+      installBody: 'Installiere beisammen und füge dann Link oder Code unter „Circle beitreten“ ein – oder komm hierher zurück und öffne den Link noch einmal.',
       afterInstall: 'Einladungslinks sind einmalig nutzbar und funktionieren nur in der App.',
     },
   },

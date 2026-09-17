@@ -51,7 +51,7 @@ const mapsPluginConfig = {
 const config: ExpoConfig = {
   name: appName,
   slug: 'beisammen-mobile',
-  version: '1.1.0',
+  version: '1.2.0',
   // Keep production OTA updates scoped to the native app version. Expo
   // recommends this stable policy for EAS Update; fingerprint runtimes are
   // still experimental and can differ between local and clean EAS installs.
@@ -172,12 +172,24 @@ const config: ExpoConfig = {
       : 'react-native-maps',
     'react-native-compressor',
     [
+      // Only used to scan invite QR codes; the picker's camera capture has its
+      // own permission string below.
+      'expo-camera',
+      {
+        cameraPermission:
+          'beisammen benötigt Zugriff auf deine Kamera, um Fotos aufzunehmen und Einladungs-QR-Codes zu scannen.',
+        microphonePermission:
+          'beisammen benötigt Zugriff auf dein Mikrofon, um Videos aufzunehmen.',
+        recordAudioAndroid: false,
+      },
+    ],
+    [
       'expo-image-picker',
       {
         photosPermission:
           'beisammen benötigt Zugriff auf deine Fotos, um sie mit deinem Circle zu teilen.',
         cameraPermission:
-          'beisammen benötigt Zugriff auf deine Kamera, um Fotos aufzunehmen.',
+          'beisammen benötigt Zugriff auf deine Kamera, um Fotos aufzunehmen und Einladungs-QR-Codes zu scannen.',
         microphonePermission:
           'beisammen benötigt Zugriff auf dein Mikrofon, um Videos aufzunehmen.',
       },

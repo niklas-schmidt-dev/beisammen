@@ -67,6 +67,7 @@
     "i": 1,
     "t": "Text"
   },
+  "0729836ca3f0aa44": "Post text could not be saved.",
   "076cc7bb8151df3f": "No Circles yet.",
   "08084b3c27d49cec": "Switching instance...",
   "0808b3272a9ad420": {
@@ -80,6 +81,7 @@
   "0a893517bd1fdd36": "Circle name",
   "0a9c69d9eae2dad0": "View media in full screen",
   "0aa80ce5d3984ba1": "As a member",
+  "0ac947b1ad0680c7": "Show QR code",
   "0acf2ed9693e515b": [
     {
       "c": "Create a new Circle",
@@ -96,6 +98,7 @@
   "0c2ef13b071c625e": "Encryption unavailable",
   "0d493a71491198e6": "Your profile picture will be removed.",
   "0e1799c39336f1f8": "Purchase complete. Your plan is active.",
+  "0e6bb1e093897b79": "Couldn't copy.",
   "0f60b94afc3f71d2": "The file will be deleted from the draft and Storage.",
   "0f76c2c7e12286f0": {
     "c": "Displays the local log for troubleshooting.",
@@ -105,8 +108,19 @@
   "0fc4e6fead4bed4c": "New posts",
   "11c879d94ceab995": "Invitation ready · {name}",
   "12282c61f9237eff": "Failed upload could not be removed.",
-  "12315ddc0a51893d": "Join my Circle \"{circleName}\": {inviteLink}\n\nThis personal link is intended only for the invited email address.",
   "123568a1106c7b47": "Back to the app",
+  "1367efe2cf2e47e7": [
+    {
+      "c": "Add invitation",
+      "i": 1,
+      "t": "Text"
+    },
+    {
+      "c": "Enter the code (e.g. K7MF3-QX9WD), paste the invitation link, or scan the QR code. You can also paste the entire message—we'll extract the link.",
+      "i": 2,
+      "t": "Text"
+    }
+  ],
   "159ccebcaa61cf15": "This link contains neither an instance nor an invitation token.",
   "165e4ab92cebc5f8": {
     "c": "No media has been shared in this Circle yet.",
@@ -155,6 +169,7 @@
       "t": "Text"
     }
   ],
+  "21e9107af038a4a8": "Invitation not found. Check the code or ask for a new invitation.",
   "222d091d7c14806e": "New members",
   "22755e52159dac76": "Upload readiness is still being checked. Please try again shortly.",
   "23f59bef7720cc4f": {
@@ -237,6 +252,7 @@
     "i": 1,
     "t": "Text"
   },
+  "34d66114f0a55bda": "Post text has been saved.",
   "34e479e1e916fae4": "Join Circle",
   "34ee832db0757026": "Delete account",
   "353d28df4ccf0ed8": "Manage, join, or create a new Circle",
@@ -305,6 +321,7 @@
   "3d09da9ba02a58dc": "Save details",
   "3e528ae74b187feb": "Invite",
   "3ec23e8b7a45b760": "Did you receive an invitation link or code? Join the Circle right away.",
+  "3f42cdb9a0c3151d": "Hide QR code",
   "3fd9f4ac5036cbdd": "Reset encryption?",
   "406f47799b1c5c71": "No active purchases found for this store account.",
   "41ad8622c06d4ea6": "View plans",
@@ -484,21 +501,10 @@
       "t": "Text"
     }
   ],
+  "5367f140e099aa32": "Opens the picture at full size",
   "561e12bca1e7abf4": "Select push notifications",
   "57180256b5f517fd": "Remove media?",
   "577b45c2e72be41e": "Delete post?",
-  "58aa2561e195aa35": [
-    {
-      "c": "Paste an invitation",
-      "i": 1,
-      "t": "Text"
-    },
-    {
-      "c": "The link looks like this: https://beisammen.app/connect?invite=…",
-      "i": 2,
-      "t": "Text"
-    }
-  ],
   "58d2cd2c6a9fa82b": "Your upload allowance for this month has been used up. Change your plan or wait until next month.",
   "592fb7c3787edf52": {
     "c": [
@@ -570,6 +576,7 @@
     "i": 1,
     "t": "Text"
   },
+  "61f89bec4d9e093c": "Edit comment",
   "6264fd4464124152": "Make {name} an Admin.",
   "6276fdce651fa4fa": "Post published.",
   "62968035b2645633": "No description provided.",
@@ -577,14 +584,9 @@
   "63260ad1d67d492c": "React with a custom emoji",
   "63cd4dede80dd49a": "The code is incorrect.",
   "64072531c749fee5": "Revoke invitation?",
-  "641a9be9baaf4442": {
-    "c": "No new activity yet.",
-    "i": 1,
-    "t": "Text"
-  },
   "64b13616147f8b92": "Copy code",
   "64f896014cab2cc7": "Remove comment",
-  "65974636ec3ea1da": "All activity",
+  "657e7096e7bbcd24": "Join my Circle \"{circleName}\": {inviteLink}\n\nOr enter this code in the app: {code}\n\nThis personal link is only for the invited email address.",
   "6659cec4933ade1b": "Settings",
   "66e4c1b247b132f4": "You are already a member of this Circle.",
   "673c083e7e0a15a8": "{name} will immediately lose access to this Circle.",
@@ -603,6 +605,18 @@
     "i": 1,
     "t": "Text"
   },
+  "6e3729ace20e2770": [
+    {
+      "c": "Add invitation",
+      "i": 1,
+      "t": "Text"
+    },
+    {
+      "c": "Enter the code (e.g. K7MF3-QX9WD), paste the link, or scan the QR code.",
+      "i": 2,
+      "t": "Text"
+    }
+  ],
   "6e553b1010bf5b15": "No connection. Check your internet connection and try again.",
   "6e9cc51ada5c84d7": "You're already a member",
   "6ec405d1b5e604a7": "This link could not be processed.",
@@ -615,6 +629,7 @@
     "i": 1,
     "t": "Text"
   },
+  "71b2fe6f97387c8b": "Copy link",
   "72435c6516c0fc27": "Email address and password are required.",
   "725e90b456e5bc36": "The Circle Owner's upload allowance for this month has been used up.",
   "736cca53e9c340d6": {
@@ -701,6 +716,7 @@
     }
   ],
   "77040eaed598ba90": "No assets could be uploaded.",
+  "770b1d65e1d0c372": "Scan QR code",
   "7793cf561b86a2b6": "Add location",
   "77c61ac22770f619": "Video",
   "77e5056f00239d94": "Could not update Circle.",
@@ -746,6 +762,7 @@
   "815a82cf6ca95e80": "This invitation is tied to the specified email address.",
   "824cae8733a9d54f": "Create a new Circle",
   "82bcd716deaf884f": "Enter your instance's backend address.",
+  "82cfe460e2eaac39": "This isn't a beisammen invitation code.",
   "830ae3de2be27474": "Could not leave Circle.",
   "8315b56e808f77d7": "Pending",
   "83373c6e5898093c": "Your current recovery code will no longer work, and you'll receive a new one. Photos in shared Circles will automatically be unlocked again as soon as another member opens the app. Photos in Circles where you're the only member can't be restored.",
@@ -795,7 +812,6 @@
     "i": 1,
     "t": "Text"
   },
-  "854115a6c88ac473": "Share again",
   "856d0442ce69ae8c": "Sign in with Apple",
   "859ca62d213f6045": "Storage connection",
   "861ca76db87adffe": {
@@ -827,11 +843,11 @@
   },
   "887fbba666ea8701": "Couldn't remove Circle picture.",
   "889ac4c59ce34610": "Invited",
-  "88df5d23d06c9e10": "The password is too short.",
   "89be0a7399a0be31": "Download update",
   "8ad13c6df3df248d": "Connected to {name}.",
   "8bcf89792bc7aefe": "When someone accepts an invitation to one of your Circles.",
   "8c0c0d9aa942415c": "Choose an active Cloud plan before uploading media items.",
+  "8caa90421684312a": "Post options",
   "8cffa7e07e7a0961": "Sign-in failed.",
   "8d3486ac3beed254": "Photo {position}",
   "8dc911190e3a4049": "The draft and all uploaded media items will be permanently removed.",
@@ -861,6 +877,11 @@
   "9210ebcc24768abe": "An account already exists for this email address. Please sign in.",
   "9265c8d4b4ecfb4b": "\"{name}\" and all posts, comments, reactions, and media—including content from all other members—will be permanently deleted. This cannot be undone.",
   "929d56ba4324ea6f": "Your upload permission couldn't be checked right now. Please try again in a moment.",
+  "930b29c19ee8b7e4": {
+    "c": "Code to enter",
+    "i": 1,
+    "t": "Text"
+  },
   "9387012f02c26adf": [
     {
       "c": "Archive",
@@ -892,6 +913,7 @@
   "96c26c2c430ff28f": "Your Beisammen recovery code. Use this code to regain access to your encrypted photos on a new device. Keep this file safe and don't share it with anyone.",
   "96e7d91a9b40a607": "Write a reply…",
   "973ca9a86c3cdaec": "Open photo in full screen",
+  "97d3001860c01311": "Hold the invitation QR code within the frame",
   "985775f88843b6b8": {
     "c": "No Circles with media yet.",
     "i": 1,
@@ -908,6 +930,18 @@
   "992600bd57cb593e": "Could not save comment.",
   "993b3e037e421080": "This post and all its media items will be permanently removed.",
   "999d4bbbb458bd29": "Confirmation code",
+  "99b37010de1a845f": [
+    {
+      "c": "Camera access required",
+      "i": 1,
+      "t": "Text"
+    },
+    {
+      "c": "beisammen needs access to your camera to scan an invitation QR code.",
+      "i": 2,
+      "t": "Text"
+    }
+  ],
   "9a0fc7365486d4ce": "Accept invitation",
   "9a4379d4129a5cae": "Billing not set up",
   "9aa15f9962d10a9a": "All months",
@@ -971,21 +1005,10 @@
     "i": 1,
     "t": "Text"
   },
-  "a4fe10b304f41c31": [
-    {
-      "c": "Paste an invitation",
-      "i": 1,
-      "t": "Text"
-    },
-    {
-      "c": "Paste the invitation link or code you received. You can also paste the entire message—we’ll extract the link.",
-      "i": 2,
-      "t": "Text"
-    }
-  ],
   "a5fbc7f165eb5977": "Could not remove comment.",
   "a63e1b2c4a577f8a": "Post text",
   "a6d2d6b25d4b2153": "Sign in",
+  "a7098e2526c9c275": "Allow access",
   "a73fb7a8c649654e": "Instance backend address",
   "a8266ae7f10c4f09": "Map",
   "a9733d094ccc3d9b": "Verify",
@@ -996,6 +1019,7 @@
   "abc14469b6f9263d": "Please fill in all fields.",
   "ae1faa567c5599ef": "Circle limit reached",
   "af0c8525da17e580": "Password",
+  "b020bf181698dbcd": "Show password",
   "b0e4acdc4732e525": "Send comment",
   "b0e92b5f17293559": "Later",
   "b0ead806bb73687d": "Delete post",
@@ -1020,7 +1044,6 @@
   "b6e5b31255e011c5": "OK",
   "b7943c5d8fb7dcf2": "Leave Circle",
   "b82cccf85c0a81fd": "The invitation for {email} will immediately become invalid.",
-  "b83d53d4e1aefbbd": "Open {text} post",
   "b8976b12bbc2c155": "Circles",
   "b8b533b0e5d9b31f": "Conversation",
   "b8ce283f0a846927": "For your family, partner, or close friends. Then invite everyone.",
@@ -1032,6 +1055,7 @@
   "baa0c1475b9eedba": "Description",
   "bc16a52bdd93d554": "Sign out",
   "bcb3266836fa2e13": "Close",
+  "bdaec2fc0c1c9061": "Join my Circle \"{circleName}\": {inviteLink}\n\nOr enter this code in the app: {code}\n\nThis link can only be used once.",
   "be2e87524830d351": "Session",
   "be45c9a7a3c287f2": "Upload failed.",
   "be7719a5a04b851c": "The media couldn't be shared.",
@@ -1049,6 +1073,7 @@
     "t": "Text"
   },
   "bf76d5856ed23850": "Activity could not be opened.",
+  "c130794f6c221003": "Minimum length reached",
   "c13f406098a93796": "Withdrawn",
   "c15872aa1b923fd3": "Revoke",
   "c184857fa604bccb": "This open link can be used once by a new member.",
@@ -1097,7 +1122,9 @@
   "cc885d77a509a58d": "We couldn't check whether you can create a Circle right now. Please try again shortly.",
   "ccfccf68b9c82f1c": "Your account is temporarily locked. Please try again later.",
   "cd930a3b354d3d62": "Reset failed. Please try again.",
+  "cdc489086db00db1": "{count} more characters to reach the minimum length",
   "ceec6c8ca514eaae": "Remove Circle picture?",
+  "cefc5ae012329baf": "Edit post text",
   "cf5a0d8099ba2979": "Continue",
   "d033b73f17ce8b6a": "Confirmation incomplete. Please try again.",
   "d04d55a206fa8ef1": "{used} of {total} Circles used",
@@ -1108,7 +1135,9 @@
   },
   "d0ae7dd55e56ec02": "When others share, comment, or react in your Circles, it will appear here.",
   "d131cae25eac3806": "When someone shares photos or videos in one of your Circles.",
+  "d1aea404fd3637d8": "Link copied.",
   "d28474a413c7d7a1": "Your Circles",
+  "d39ba8498e624169": "edited",
   "d3b5d8f368e6cbd0": "Terms of Use (EULA)",
   "d3c2e98ff41acf96": [
     {
@@ -1151,11 +1180,6 @@
   ],
   "d95ecb4808a5186b": "Go to sign in",
   "d9b4db3591679300": "Open video in full screen",
-  "d9c740b3c9c694f8": {
-    "c": "Activity",
-    "i": 1,
-    "t": "Text"
-  },
   "da9c2664af71ca7b": "Uploading",
   "db3a9cb1b934ba3d": {
     "c": "No comments yet — be the first to write one.",
@@ -1184,6 +1208,7 @@
   "e37f897b505bfbb8": "Remove member?",
   "e381376035d47da4": "Join \"{name}\"",
   "e4f61f2b3d31e88c": "Go to Home",
+  "e54f86e0dac01ac2": "Edit text",
   "e648b842b980d86c": "Select a Circle to view the feed.",
   "e668f9cc3c38ba18": "You are already signed in.",
   "e67375e3f703380e": "Self-hosted",
@@ -1253,12 +1278,12 @@
   "f4709ca74a126710": "This sign-in requires additional steps. Please try again.",
   "f4a7c927e9402205": "Publishing...",
   "f4c25635ff520fe8": "Give your Circle a name.",
-  "f4ee5116b0e85d38": "Join my Circle \"{circleName}\": {inviteLink}\n\nThis link can only be used once.",
   "f572dcdc1700aa53": "Post could not be deleted.",
   "f669b5516dbac8e7": "Code copied.",
   "f680e1a1ef7f36a3": "Circle name",
   "f6a7f6c8162649d4": "Leave",
   "f75c0c2d74629504": "Timeline",
+  "f7b0dcad2d46302d": "Hide password",
   "f87b57fd7ab0a057": "Couldn't set Circle picture.",
   "f896531c6aab1022": "Image for \"{name}\" removed.",
   "f89678ce2d2cc959": "Self-hosted · no limits",

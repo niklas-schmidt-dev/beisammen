@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -13,6 +13,9 @@ import {
 import { usePageMeta } from "@/lib/meta";
 
 const APP_SCHEME = "beisammen";
+// Development builds register `beisammen-dev://`; `?app=dev` lets testers
+// hand a link to that build without the store app intercepting it.
+const DEV_APP_SCHEME = "beisammen-dev";
 
 function detectLocale(routeLocale: Locale | null): Locale {
   if (routeLocale) {
@@ -57,7 +60,9 @@ export function ConnectPage({
 
   const inviteToken = searchParams.get("invite")?.trim() ?? "";
   const instanceUrl = searchParams.get("instance")?.trim() ?? "";
+  const targetsDevBuild = searchParams.get("app") === "dev";
   const hasParams = inviteToken.length > 0 || instanceUrl.length > 0;
+  const [copied, setCopied] = useState(false);
 
   const appUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -68,8 +73,20 @@ export function ConnectPage({
       params.set("invite", inviteToken);
     }
     const query = params.toString();
-    return `${APP_SCHEME}://connect${query ? `?${query}` : ""}`;
-  }, [instanceUrl, inviteToken]);
+    const scheme = targetsDevBuild ? DEV_APP_SCHEME : APP_SCHEME;
+    return `${scheme}://connect${query ? `?${query}` : ""}`;
+  }, [instanceUrl, inviteToken, targetsDevBuild]);
+
+  const copyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access can be denied inside in-app browsers; the link stays
+      // selectable in the address bar.
+    }
+  };
 
   usePageMeta({
     lang: locale,
@@ -118,6 +135,16 @@ export function ConnectPage({
               >
                 {t.openApp}
                 <span aria-hidden="true">→</span>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-13 rounded-full px-7 text-base"
+                onClick={() => {
+                  void copyInvite();
+                }}
+              >
+                {copied ? t.copied : t.copyLink}
               </Button>
             </div>
           )}

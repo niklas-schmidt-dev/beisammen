@@ -36,22 +36,24 @@ export function inviteRoleLabel(role: InviteRole): string {
 export function buildInviteShareMessage(input: {
   circleName: string;
   inviteLink: string;
+  code: string;
   mode: InviteMode;
 }): string {
   const variables = {
     circleName: input.circleName,
     inviteLink: input.inviteLink,
+    code: input.code,
   };
 
   if (input.mode === 'open') {
     return msg(
-      'Komm in meinen Circle "{circleName}": {inviteLink}\n\nDieser Link ist einmalig nutzbar.',
+      'Komm in meinen Circle "{circleName}": {inviteLink}\n\nOder gib in der App diesen Code ein: {code}\n\nDieser Link ist einmalig nutzbar.',
       variables,
     );
   }
 
   return msg(
-    'Komm in meinen Circle "{circleName}": {inviteLink}\n\nDieser persönliche Link ist nur für die eingeladene E-Mail gedacht.',
+    'Komm in meinen Circle "{circleName}": {inviteLink}\n\nOder gib in der App diesen Code ein: {code}\n\nDieser persönliche Link ist nur für die eingeladene E-Mail gedacht.',
     variables,
   );
 }

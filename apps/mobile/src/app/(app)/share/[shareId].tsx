@@ -761,7 +761,7 @@ export default function ShareDetailScreen() {
 
         <Animated.View entering={enterSection(2)} style={styles.storyBlock}>
           <View style={styles.authorRow}>
-            <Avatar name={share.authorName ?? '?'} image={authorImage} size="md" />
+            <Avatar name={share.authorName ?? '?'} image={authorImage} size="md" expandable />
             <View style={styles.authorInfo}>
               <Text style={[styles.authorName, { color: theme.text }]} numberOfLines={1}>
                 {share.authorName}

@@ -319,7 +319,7 @@ export const FeedCard = memo(function FeedCard({
 
       {/* Author row */}
       <View style={styles.authorRow}>
-        <Avatar name={share.authorName ?? '?'} image={authorImage} size="sm" />
+        <Avatar name={share.authorName ?? '?'} image={authorImage} size="sm" expandable />
         <View style={styles.authorInfo}>
           <Text
             style={[styles.authorName, { color: theme.text }]}

@@ -77,6 +77,7 @@ export interface CircleMemberRecord {
   email?: string;
   avatarUrl?: string;
   hasProfileImage: boolean;
+  profileImageKey?: string;
   canChangeRole: boolean;
   canRemove: boolean;
   canTransferOwnership: boolean;
@@ -547,7 +548,7 @@ export const api = {
     create: makeFunctionReference<
       'mutation',
       CreateInviteArgs,
-      { inviteId: string; token: string; inviteLink: string }
+      { inviteId: string; token: string; code: string; inviteLink: string }
     >('invites:create'),
     listForCircle: makeFunctionReference<'query', { circleId: string }, CircleInviteRecord[]>(
       'invites:listForCircle',
@@ -558,7 +559,8 @@ export const api = {
     accept: makeFunctionReference<
       'mutation',
       { token: string },
-      { inviteId: string; circleId: string }
+      | { status: 'accepted'; inviteId: string; circleId: string }
+      | { status: 'not_found' }
     >('invites:accept'),
     revoke: makeFunctionReference<
       'mutation',

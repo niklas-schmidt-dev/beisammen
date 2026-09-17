@@ -1,8 +1,7 @@
 diff --git a/ios/MediaHandler.swift b/ios/MediaHandler.swift
-index 5bda8676e428dedc8c7e10f4a6708071e8218d8e..1e64460ea1a3132adc8314ff17d5c387486179b1 100644
 --- a/ios/MediaHandler.swift
 +++ b/ios/MediaHandler.swift
-@@ -227,7 +227,7 @@ internal struct MediaHandler {
+@@ -227,7 +227,7 @@
  
    // Unlike the case of regular images, we have to operate on original data of the image in order to preserve the exif data,
    // otherwise it won't be possible to connect the image and video into a `PHLivePhoto` after reading it from the cache directory later.
@@ -11,7 +10,7 @@ index 5bda8676e428dedc8c7e10f4a6708071e8218d8e..1e64460ea1a3132adc8314ff17d5c387
    private func handleLivePhoto(from selectedImage: PHPickerResult) async throws -> AssetInfo {
      let itemProvider = selectedImage.itemProvider
      let livePhotoObject = try await itemProvider.loadObject(ofClass: PHLivePhoto.self)
-@@ -249,13 +249,18 @@ internal struct MediaHandler {
+@@ -249,13 +249,18 @@
      let (photoUrl, pairedVideoUrl) = try generatePairedUrls(
        photoFileExtension: photoFileExtension, videoFileExtension: pairedVideoFileExtension)
  
@@ -33,7 +32,7 @@ index 5bda8676e428dedc8c7e10f4a6708071e8218d8e..1e64460ea1a3132adc8314ff17d5c387
  
      let fileSize = getFileSize(from: photoUrl)
      let mimeType = getMimeType(from: photoResource, fileExtension: photoUrl.pathExtension)
-@@ -344,19 +349,25 @@ internal struct MediaHandler {
+@@ -344,19 +349,25 @@
          let resourceOptions = PHAssetResourceRequestOptions()
          resourceOptions.isNetworkAccessAllowed = options.shouldDownloadFromNetwork
  
@@ -71,24 +70,14 @@ index 5bda8676e428dedc8c7e10f4a6708071e8218d8e..1e64460ea1a3132adc8314ff17d5c387
        }
      }
  
-@@ -409,7 +420,10 @@ internal struct MediaHandler {
-     // asset as *adjusted* and will re-render a temporary file for us. Copying the resource bytes
-     // ourselves is dramatically faster because it just streams the already-existing file.
- 
--    if options.videoExportPreset == .passthrough, let assetId = selectedVideo.assetIdentifier {
-+    let photoLibraryReadStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-+    let hasPhotoLibraryReadAccess = photoLibraryReadStatus == .authorized || photoLibraryReadStatus == .limited
-+
-+    if options.videoExportPreset == .passthrough, hasPhotoLibraryReadAccess, let assetId = selectedVideo.assetIdentifier {
-       let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil)
-       if let asset = fetchResult.firstObject {
-         // Prefer the full-size resource when available, otherwise fall back to the default `.video`.
-@@ -426,15 +440,21 @@ internal struct MediaHandler {
+@@ -429,15 +440,21 @@
            let resourceOptions = PHAssetResourceRequestOptions()
            resourceOptions.isNetworkAccessAllowed = options.shouldDownloadFromNetwork
  
 -          try await PHAssetResourceManager.default().writeData(for: resource, toFile: destinationUrl, options: resourceOptions)
--
++          do {
++            try await PHAssetResourceManager.default().writeData(for: resource, toFile: destinationUrl, options: resourceOptions)
+ 
 -          let mimeType = getMimeType(from: resource, fileExtension: destinationUrl.pathExtension)
 -          return try buildVideoResult(
 -            for: destinationUrl,
@@ -96,9 +85,6 @@ index 5bda8676e428dedc8c7e10f4a6708071e8218d8e..1e64460ea1a3132adc8314ff17d5c387
 -            mimeType: mimeType,
 -            assetId: assetId
 -          )
-+          do {
-+            try await PHAssetResourceManager.default().writeData(for: resource, toFile: destinationUrl, options: resourceOptions)
-+
 +            let mimeType = getMimeType(from: resource, fileExtension: destinationUrl.pathExtension)
 +            return try buildVideoResult(
 +              for: destinationUrl,

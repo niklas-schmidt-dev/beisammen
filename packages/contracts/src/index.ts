@@ -40,6 +40,55 @@ export const COMMENT_MAX_BODY_LENGTH = 1000;
 /** Share captions are short by design; the composer and the edit flow share this bound. */
 export const SHARE_CAPTION_MAX_LENGTH = 240;
 export const REACTION_TOP_EMOJI_LIMIT = 3;
+/**
+ * Minimum password length for new accounts. Mirrors the Clerk Dashboard
+ * password policy so the sign-up form can show progress before submitting;
+ * Clerk stays the authority and still rejects shorter passwords server-side.
+ */
+export const PASSWORD_MIN_LENGTH = 15;
+
+/**
+ * Invite codes: 10 symbols from the Crockford base32 alphabet (no 0/O or
+ * 1/I/L ambiguity), shown as `XXXXX-XXXXX`. The same string rides in the
+ * invite link's `invite` parameter and inside the QR code, so link, code and
+ * scan all resolve to one credential. 50 bits of entropy plus per-user rate
+ * limits on lookup and accept keep guessing impractical.
+ */
+export const INVITE_CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+export const INVITE_CODE_LENGTH = 10;
+
+/**
+ * Canonical form of a typed or scanned invite code: uppercase, without
+ * separators, with the usual misreads folded (O→0, I/L→1). Returns null when
+ * the input is not a short code, e.g. a legacy UUID token, so callers keep
+ * those untouched.
+ */
+export function normalizeInviteCode(raw: string): string | null {
+  const folded = raw
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '')
+    .replace(/O/g, '0')
+    .replace(/[IL]/g, '1');
+
+  if (folded.length !== INVITE_CODE_LENGTH) {
+    return null;
+  }
+
+  for (const symbol of folded) {
+    if (!INVITE_CODE_ALPHABET.includes(symbol)) {
+      return null;
+    }
+  }
+
+  return folded;
+}
+
+/** Display form with a separator in the middle: `K7MF3-QX9WD`. */
+export function formatInviteCode(code: string): string {
+  const half = Math.ceil(code.length / 2);
+  return `${code.slice(0, half)}-${code.slice(half)}`;
+}
 
 export const SUPPORTED_IMAGE_MIME_TYPES = [
   'image/jpeg',

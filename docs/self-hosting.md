@@ -44,6 +44,9 @@ Private and noncommercial self-hosting is allowed under the repository license.
   deployment kind, billing mode, and storage capabilities to use
 - links with both `instance` and `invite` switch the active instance before
   storing the invite token locally
+- development builds (`app.beisammen.app.dev`, scheme `beisammen-dev`) are
+  listed in the Universal Links association file; the website's fallback
+  button targets the dev scheme when the link carries `&app=dev`
 
 ## Push notifications
 

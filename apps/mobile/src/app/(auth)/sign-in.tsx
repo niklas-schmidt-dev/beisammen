@@ -18,8 +18,9 @@ import {
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { normalizeBaseUrl } from '@beisammen/contracts';
+import { PASSWORD_MIN_LENGTH, normalizeBaseUrl } from '@beisammen/contracts';
 
+import { PasswordField } from '@/components/auth/PasswordField';
 import { AppleSignInButton, GoogleSignInButton } from '@/components/auth/sso-buttons';
 import { AnimatedPressable, AuroraBackdrop, Button, Card } from '@/components/ui';
 import { BrandMarkAnimated } from '@/components/ui/skia/BrandMarkAnimated';
@@ -85,10 +86,10 @@ function translateClerkError(clerkError: ClerkApiError, gt: Translate): string |
     case 'form_password_incorrect':
       return gt('Das Passwort ist falsch.');
     case 'form_password_length_too_short': {
-      const minLength = /(\d+)/.exec(rawMessage)?.[1];
-      return minLength
-        ? gt('Das Passwort muss mindestens {count} Zeichen lang sein.', { count: minLength })
-        : gt('Das Passwort ist zu kurz.');
+      // Clerk states its minimum in English prose; prefer the number it sent,
+      // fall back to the policy mirrored in contracts.
+      const minLength = /(\d+)/.exec(rawMessage)?.[1] ?? String(PASSWORD_MIN_LENGTH);
+      return gt('Das Passwort muss mindestens {count} Zeichen lang sein.', { count: minLength });
     }
     case 'form_password_size_in_bytes_exceeded':
       return gt('Das Passwort ist zu lang.');
@@ -266,6 +267,17 @@ export default function SignInScreen() {
 
     if (!normalizedEmail || !password) {
       setAuthError(gt('E-Mail-Adresse und Passwort werden benötigt.'));
+      return;
+    }
+
+    // Clerk enforces the same minimum; catching it here saves the round-trip
+    // and keeps the message consistent with the field's progress hint.
+    if (authMode === 'sign-up' && password.length < PASSWORD_MIN_LENGTH) {
+      setAuthError(
+        gt('Das Passwort muss mindestens {count} Zeichen lang sein.', {
+          count: String(PASSWORD_MIN_LENGTH),
+        }),
+      );
       return;
     }
 
@@ -706,17 +718,10 @@ export default function SignInScreen() {
                       editable={!isBusy}
                       style={inputStyle}
                     />
-                    <TextInput
+                    <PasswordField
                       value={password}
                       onChangeText={setPassword}
-                      accessibilityLabel={gt('Passwort')}
-                      autoCapitalize="none"
-                      autoComplete={authMode === 'sign-in' ? 'current-password' : 'new-password'}
-                      autoCorrect={false}
-                      secureTextEntry
-                      textContentType={authMode === 'sign-in' ? 'password' : 'newPassword'}
-                      placeholder={gt('Passwort')}
-                      placeholderTextColor={theme.textTertiary}
+                      intent={authMode === 'sign-in' ? 'current' : 'new'}
                       editable={!isBusy}
                       style={inputStyle}
                     />

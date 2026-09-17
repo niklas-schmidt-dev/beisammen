@@ -19,6 +19,7 @@ import { useConvexAuth, useMutation, usePaginatedQuery, useQuery } from 'convex/
 import { LegalLinks } from '@/components/billing/LegalLinks';
 import { Button, Card, FeedbackToast, LoadingBox } from '@/components/ui';
 import { InviteComposer, type InviteComposerSubmitArgs } from '@/components/invites/InviteComposer';
+import { InviteQrScanner } from '@/components/invites/InviteQrScanner';
 import { CelebrationBurst } from '@/components/onboarding/CelebrationBurst';
 import { DriftFieldBackdrop } from '@/components/onboarding/DriftFieldBackdrop';
 import { OrbitHero } from '@/components/onboarding/OrbitHero';
@@ -85,6 +86,7 @@ export default function OnboardingScreen() {
   const [createdCircle, setCreatedCircle] = useState<CreatedCircle | null>(null);
   const [isCreatingCircle, setIsCreatingCircle] = useState(false);
   const [joinInput, setJoinInput] = useState('');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const { isPresenting: isPresentingPaywall, present: presentPaywall } =
@@ -193,6 +195,12 @@ export default function OnboardingScreen() {
 
     try {
       const accepted = await acceptInvite({ token: joinToken });
+
+      if (accepted.status !== 'accepted') {
+        setFeedback(gt('Einladung nicht gefunden. Prüfe den Code oder bitte um eine neue Einladung.'));
+        return;
+      }
+
       setActiveCircleId(accepted.circleId);
       wipe(() => router.replace('/home'));
     } catch (error) {
@@ -464,7 +472,7 @@ export default function OnboardingScreen() {
                 <T>
                   <Text style={[styles.cardTitle, { color: theme.text }]}>Einladung einfügen</Text>
                   <Text style={[styles.body, { color: theme.textSecondary }]}>
-                    Der Link sieht so aus: https://beisammen.app/connect?invite=…
+                    Gib den Code ein (z.B. K7MF3-QX9WD), füge den Link ein oder scanne den QR-Code.
                   </Text>
                 </T>
                 <TextInput
@@ -485,6 +493,13 @@ export default function OnboardingScreen() {
                     </Text>
                   </T>
                 ) : null}
+                <Button
+                  label={gt('QR-Code scannen')}
+                  icon="qr-code-outline"
+                  variant="outline"
+                  disabled={isAccepting}
+                  onPress={() => setIsScannerOpen(true)}
+                />
               </Card>
 
               {joinToken ? (
@@ -554,6 +569,14 @@ export default function OnboardingScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       <FeedbackToast message={feedback} onDismiss={() => setFeedback(null)} />
+      <InviteQrScanner
+        visible={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanned={(scannedToken) => {
+          setIsScannerOpen(false);
+          setJoinInput(scannedToken);
+        }}
+      />
     </SafeAreaView>
   );
 }

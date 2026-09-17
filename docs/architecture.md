@@ -34,6 +34,10 @@
   used
 - invite links can include both `instance` and `invite`; invite tokens are
   stored under the selected instance URL
+- the `invite` value is a 10-symbol Crockford base32 code (shown as
+  `XXXXX-XXXXX`); the same code can be typed by hand or scanned from a QR
+  code that encodes the https link, and lookups/accepts are rate-limited per
+  user (`convex/rateLimit.ts`)
 
 ## Public vs secret configuration
 

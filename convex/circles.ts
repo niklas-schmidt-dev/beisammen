@@ -394,6 +394,7 @@ export const listMembers = query({
           email: user?.email,
           avatarUrl: user?.avatarUrl,
           hasProfileImage: Boolean(user?.profileImageStorage),
+          profileImageKey: imageCacheKey(user?.profileImageStorage),
           canChangeRole: viewerIsOwner && !isSelf && !targetIsOwner,
           canRemove: viewerIsOwner && !isSelf && !targetIsOwner,
           canTransferOwnership: viewerIsOwner && !isSelf && !targetIsOwner,

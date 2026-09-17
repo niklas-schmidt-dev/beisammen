@@ -132,7 +132,7 @@ const CommentRow = memo(function CommentRow({
 
   return (
     <View style={styles.commentRow}>
-      <Avatar name={comment.authorName} image={avatarImage} size="sm" />
+      <Avatar name={comment.authorName} image={avatarImage} size="sm" expandable />
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <Text style={[styles.commentAuthor, { color: theme.text }]} numberOfLines={1}>

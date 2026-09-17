@@ -1,8 +1,10 @@
 import { Image } from 'expo-image';
-import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useGT } from 'gt-react-native';
+import { memo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Fonts, FontSize, Radius } from '@/constants/theme';
+import { AvatarLightbox } from '@/components/media/AvatarLightbox';
 import type { AvatarImage } from '@/features/media/avatar-image-cache';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -11,6 +13,8 @@ interface AvatarProps {
   /** Plain stable URL (e.g. Clerk avatar) or a cache-keyed resolved source. */
   image?: AvatarImage;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** Tapping opens the image fullscreen. Ignored while there is no image. */
+  expandable?: boolean;
 }
 
 const sizeMap = {
@@ -29,12 +33,20 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-export const Avatar = memo(function Avatar({ name, image, size = 'md' }: AvatarProps) {
+export const Avatar = memo(function Avatar({
+  name,
+  image,
+  size = 'md',
+  expandable = false,
+}: AvatarProps) {
   const theme = useTheme();
+  const gt = useGT();
   const dim = sizeMap[size];
   const source = typeof image === 'string' ? { uri: image } : image;
+  const [isExpanded, setIsExpanded] = useState(false);
+  const canExpand = expandable && Boolean(source);
 
-  return (
+  const frame = (
     <View
       style={[
         styles.container,
@@ -61,6 +73,31 @@ export const Avatar = memo(function Avatar({ name, image, size = 'md' }: AvatarP
         </Text>
       )}
     </View>
+  );
+
+  if (!canExpand) {
+    return frame;
+  }
+
+  return (
+    <>
+      <Pressable
+        accessibilityRole="imagebutton"
+        accessibilityLabel={name}
+        accessibilityHint={gt('Öffnet das Bild in voller Größe')}
+        hitSlop={4}
+        onPress={() => setIsExpanded(true)}
+        style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+      >
+        {frame}
+      </Pressable>
+      <AvatarLightbox
+        image={image}
+        name={name}
+        visible={isExpanded}
+        onClose={() => setIsExpanded(false)}
+      />
+    </>
   );
 });
 

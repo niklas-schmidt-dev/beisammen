@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import rateLimiterTest from '@convex-dev/rate-limiter/test';
 import { convexTest, type TestConvex } from 'convex-test';
 import type { UserIdentity } from 'convex/server';
 import { describe, expect, test, vi } from 'vitest';
@@ -113,7 +114,10 @@ type TestDb = TestConvex<typeof schema>;
 type TestUser = ReturnType<TestDb['withIdentity']>;
 
 function createTestDb() {
-  return convexTest(schema, modules);
+  const t = convexTest(schema, modules);
+  // invites.preview / accept consult the rate limiter component.
+  rateLimiterTest.register(t);
+  return t;
 }
 
 async function withDeploymentKind<T>(
@@ -830,6 +834,9 @@ describe('invites', () => {
 
     expect(stored?.tokenHash).toMatch(/^sha256:[a-f0-9]{64}$/);
     expect(stored?.tokenHash).not.toBe(created.token);
+    expect(created.token).toMatch(/^[0-9A-HJKMNP-TV-Z]{10}$/);
+    expect(created.code).toBe(`${created.token.slice(0, 5)}-${created.token.slice(5)}`);
+    expect(created.inviteLink).toContain(`invite=${created.token}`);
 
     const invitee = await upsertViewer(t, 'friend@example.com', 'Friend');
     await createLegacyInvite({
@@ -854,6 +861,36 @@ describe('invites', () => {
       canAccept: true,
       emailMatchesViewer: true,
     });
+    // Typed codes resolve regardless of case, separators, and O/0 misreads.
+    const typed = created.code.toLowerCase().replace(/0/g, 'o');
+    await expect(invitee.user.query(api.invites.preview, { token: ` ${typed} ` })).resolves.toMatchObject({
+      circleId: owner.circleId,
+    });
+  });
+
+  test('guessing invite codes is throttled per user', async () => {
+    const t = createTestDb();
+    const owner = await createCircleFor(t, 'owner@example.com');
+    const guesser = await upsertViewer(t, 'guesser@example.com', 'Guesser');
+    const invite = await owner.user.mutation(api.invites.create, {
+      circleId: owner.circleId,
+      mode: 'open',
+      role: 'member',
+    });
+
+    // The accept bucket holds 10 tokens; every wrong guess spends one.
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await expect(
+        guesser.user.mutation(api.invites.accept, { token: `AAAAAAAAA${attempt}` }),
+      ).resolves.toEqual({ status: 'not_found' });
+    }
+
+    await expect(guesser.user.mutation(api.invites.accept, { token: invite.token })).rejects.toThrow(
+      'Zu viele Versuche',
+    );
+    await expect(guesser.user.query(api.invites.preview, { token: invite.token })).resolves.toMatchObject(
+      { circleId: owner.circleId },
+    );
   });
 
   test('accept enforces pending status, expiry, and matching viewer email', async () => {

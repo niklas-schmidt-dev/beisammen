@@ -1,8 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Clipboard from 'expo-clipboard';
 import { T, useGT, useMessages, Var } from 'gt-react-native';
 import { memo, useCallback, useState } from 'react';
 import { Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { InviteQrCode } from '@/components/invites/InviteQrCode';
 import { Button } from '@/components/ui';
 import { Fonts, FontSize, Radius, Spacing } from '@/constants/theme';
 import {
@@ -22,10 +24,13 @@ export interface InviteComposerSubmitArgs {
 
 export interface InviteComposerResult {
   inviteLink: string;
+  /** Display form of the short code (`K7MF3-QX9WD`). */
+  code: string;
 }
 
 interface LastInvite {
   inviteLink: string;
+  code: string;
   mode: InviteMode;
   invitedEmail: string | null;
   role: InviteRole;
@@ -52,6 +57,7 @@ export const InviteComposer = memo(function InviteComposer({
   const [role, setRole] = useState<InviteRole>('member');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastInvite, setLastInvite] = useState<LastInvite | null>(null);
+  const [showQr, setShowQr] = useState(false);
 
   const shareInvite = useCallback(
     async (invite: LastInvite) => {
@@ -60,12 +66,25 @@ export const InviteComposer = memo(function InviteComposer({
           buildInviteShareMessage({
             circleName,
             inviteLink: invite.inviteLink,
+            code: invite.code,
             mode: invite.mode,
           }),
         ),
       });
     },
     [circleName, m],
+  );
+
+  const copyInvite = useCallback(
+    async (invite: LastInvite, what: 'link' | 'code') => {
+      try {
+        await Clipboard.setStringAsync(what === 'link' ? invite.inviteLink : invite.code);
+        onFeedback(what === 'link' ? gt('Link kopiert.') : gt('Code kopiert.'));
+      } catch {
+        onFeedback(gt('Kopieren hat nicht geklappt.'));
+      }
+    },
+    [gt, onFeedback],
   );
 
   const handleCreateInvite = useCallback(async () => {
@@ -87,12 +106,14 @@ export const InviteComposer = memo(function InviteComposer({
       });
       const nextInvite = {
         inviteLink: created.inviteLink,
+        code: created.code,
         mode,
         invitedEmail: mode === 'email' ? normalizedEmail : null,
         role,
       };
 
       setLastInvite(nextInvite);
+      setShowQr(false);
       setInvitedEmail('');
       onFeedback(gt('Einladung erstellt.'));
       await shareInvite(nextInvite);
@@ -204,15 +225,55 @@ export const InviteComposer = memo(function InviteComposer({
               {lastInvite.invitedEmail}
             </Text>
           ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={gt('Code kopieren')}
+            onPress={() => {
+              void copyInvite(lastInvite, 'code');
+            }}
+            style={({ pressed }) => [
+              styles.codeBox,
+              { borderColor: theme.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <T>
+              <Text style={[styles.kicker, { color: theme.textTertiary }]}>Code zum Eintippen</Text>
+            </T>
+            <Text style={[styles.codeText, { color: theme.text }]} selectable>
+              {lastInvite.code}
+            </Text>
+            <Ionicons name="copy-outline" size={16} color={theme.textSecondary} />
+          </Pressable>
           <Text selectable style={[styles.linkText, { color: theme.primary }]}>
             {lastInvite.inviteLink}
           </Text>
+          {showQr ? <InviteQrCode value={lastInvite.inviteLink} /> : null}
+          <View style={styles.actionRow}>
+            <View style={styles.actionCol}>
+              <Button
+                label={gt('Teilen')}
+                icon="share-social-outline"
+                variant="outline"
+                onPress={() => {
+                  void handleShareLastInvite();
+                }}
+              />
+            </View>
+            <View style={styles.actionCol}>
+              <Button
+                label={showQr ? gt('QR ausblenden') : gt('QR zeigen')}
+                icon="qr-code-outline"
+                variant="outline"
+                onPress={() => setShowQr((current) => !current)}
+              />
+            </View>
+          </View>
           <Button
-            label={gt('Erneut teilen')}
-            icon="share-social-outline"
-            variant="outline"
+            label={gt('Link kopieren')}
+            icon="link-outline"
+            variant="ghost"
             onPress={() => {
-              void handleShareLastInvite();
+              void copyInvite(lastInvite, 'link');
             }}
           />
         </View>
@@ -370,5 +431,29 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: FontSize.sm,
     lineHeight: 20,
+  },
+  codeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  codeText: {
+    flex: 1,
+    fontFamily: Fonts.mono,
+    fontSize: FontSize.lg,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  actionCol: {
+    flex: 1,
   },
 });

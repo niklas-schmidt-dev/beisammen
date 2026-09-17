@@ -20,17 +20,17 @@
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
-    "@types/node": "^26.2.0",
-    "convex": "^1.44.0",
-    "convex-test": "^0.0.55",
-    "turbo": "^2.10.10",
+    "@types/node": "^26.6.1",
+    "convex": "^1.46.0",
+    "convex-test": "^0.0.58",
+    "turbo": "^2.10.13",
     "typescript": "~6.0.3",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
   },
   "dependencies": {
-    "@convex-dev/rate-limiter": "^0.3.2",
-    "@convex-dev/resend": "^0.2.6",
+    "@convex-dev/rate-limiter": "^0.4.0",
+    "@convex-dev/resend": "^0.2.8",
     "convex-revenuecat": "0.3.2"
   }
 }

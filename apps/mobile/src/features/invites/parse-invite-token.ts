@@ -1,7 +1,11 @@
+import { normalizeInviteCode } from '@beisammen/contracts';
+
 /**
- * Accepts a raw invite token, an invite link (`https://beisammen.app/connect?invite=...`
- * or the legacy `beisammen://connect?invite=...`), or a pasted share message
- * containing such a link.
+ * Accepts a raw invite code (`K7MF3-QX9WD`, any case, with or without the
+ * separator), a legacy UUID token, an invite link
+ * (`https://beisammen.app/connect?invite=...` or the legacy
+ * `beisammen://connect?invite=...`), or a pasted share message containing
+ * such a link. Short codes come back in their canonical form.
  */
 export function parseInviteToken(raw: string): string | null {
   const trimmed = raw.trim();
@@ -13,11 +17,21 @@ export function parseInviteToken(raw: string): string | null {
   const paramMatch = trimmed.match(/[?&]invite=([^&\s]+)/);
 
   if (paramMatch?.[1]) {
+    let token = paramMatch[1];
+
     try {
-      return decodeURIComponent(paramMatch[1]);
+      token = decodeURIComponent(token);
     } catch {
-      return paramMatch[1];
+      // Keep the raw parameter when it is not valid percent-encoding.
     }
+
+    return normalizeInviteCode(token) ?? token;
+  }
+
+  const asCode = normalizeInviteCode(trimmed);
+
+  if (asCode) {
+    return asCode;
   }
 
   if (/\s/.test(trimmed)) {

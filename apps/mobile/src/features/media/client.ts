@@ -685,7 +685,9 @@ export async function optimizePickerAsset(
   return await processVideoAsset(asset, location, capturedAt);
 }
 
-const AVATAR_MAX_DIMENSION = 1024;
+// Large enough for the fullscreen lightbox on 3x displays, small enough that
+// avatars stay a few hundred kilobytes.
+const AVATAR_MAX_DIMENSION = 1536;
 const AVATAR_JPEG_QUALITY = 0.8;
 
 /**

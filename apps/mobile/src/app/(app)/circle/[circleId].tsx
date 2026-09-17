@@ -35,9 +35,10 @@ import { useSession } from '@/features/auth/session-provider';
 import { api } from '@/features/convex/api';
 import { rotateCircleKeyNow } from '@/features/crypto/rotation';
 import { inviteModeLabel } from '@/features/invites/preview-state';
-import { formatBytes, optimizePickerAsset, uploadPreparedFile } from '@/features/media/client';
+import { formatBytes, optimizeAvatarImageAsset, uploadPreparedFile } from '@/features/media/client';
 import { clearCircleDecryptedMedia } from '@/features/media/decrypted-cache';
 import { useCircleImage } from '@/features/media/use-circle-image-url';
+import { useUserProfileImage } from '@/features/media/use-user-profile-image-url';
 import { buildMemoryViewerHref } from '@/features/memories/timeline';
 import { MemoryTile } from '@/features/memories/MemoryTile';
 import { useTheme } from '@/hooks/use-theme';
@@ -207,7 +208,7 @@ export default function CircleManagementScreen() {
         return;
       }
 
-      const processedAsset = await optimizePickerAsset(pickedAsset);
+      const processedAsset = await optimizeAvatarImageAsset(pickedAsset);
 
       if (processedAsset.sizeBytes === undefined || processedAsset.sizeBytes <= 0) {
         throw new Error(gt('Die Dateigröße konnte nicht ermittelt werden.'));
@@ -624,7 +625,7 @@ export default function CircleManagementScreen() {
               </View>
 
               <View style={styles.heroRow}>
-                <Avatar name={circle.name} image={image} size="lg" />
+                <Avatar name={circle.name} image={image} size="lg" expandable />
                 <View style={styles.heroCopy}>
                   <Text style={[styles.heroTitle, { color: theme.text }]}>{circle.name}</Text>
                   <T>
@@ -931,6 +932,8 @@ function MemberRow({
   const gt = useGT();
   const m = useMessages();
   const dateTimeFormat = useDateFormat(DATE_TIME_FORMAT_OPTIONS);
+  const customImage = useUserProfileImage(member.userId, member.profileImageKey);
+  const memberImage = customImage ?? member.avatarUrl ?? null;
 
   return (
     <View
@@ -942,7 +945,7 @@ function MemberRow({
         },
       ]}
     >
-      <Avatar name={member.displayName} image={member.avatarUrl ?? null} size="sm" />
+      <Avatar name={member.displayName} image={memberImage} size="sm" expandable />
       <View style={styles.rowCopy}>
         <View style={styles.inlineRow}>
           <Text style={[styles.rowTitle, { color: theme.text }]} numberOfLines={1}>

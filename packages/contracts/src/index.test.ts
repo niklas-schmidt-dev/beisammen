@@ -9,8 +9,10 @@ import {
   buildInstanceDiscoveryUrl,
   buildClerkInstanceConfig,
   compareAppVersions,
+  formatInviteCode,
   isAppVersionSupported,
   normalizeCommentBody,
+  normalizeInviteCode,
   normalizeReactionEmoji,
   parseInstanceConfig,
 } from './index';
@@ -364,5 +366,25 @@ describe('engagement contracts', () => {
     expect(normalizeReactionEmoji('7️⃣')).toBe('7️⃣');
     expect(() => normalizeReactionEmoji('ok')).toThrow(/emoji/i);
     expect(() => normalizeReactionEmoji('👍👍')).toThrow(/single emoji/i);
+  });
+});
+
+describe('invite codes', () => {
+  test('normalizes typed codes and folds common misreads', () => {
+    expect(normalizeInviteCode(' k7mf3-qx9wd ')).toBe('K7MF3QX9WD');
+    expect(normalizeInviteCode('K7MF3 QX9WD')).toBe('K7MF3QX9WD');
+    expect(normalizeInviteCode('k7mf3-qxOwd')).toBe('K7MF3QX0WD');
+    expect(normalizeInviteCode('k7mf3-qxIwl')).toBe('K7MF3QX1W1');
+  });
+
+  test('rejects anything that is not a short code', () => {
+    expect(normalizeInviteCode('b02067d6-1c1a-4b7e-9a1c-6d2f1a3c9e10')).toBeNull();
+    expect(normalizeInviteCode('K7MF3QX9W')).toBeNull();
+    expect(normalizeInviteCode('K7MF3QX9WU')).toBeNull();
+    expect(normalizeInviteCode('')).toBeNull();
+  });
+
+  test('formats codes with a separator in the middle', () => {
+    expect(formatInviteCode('K7MF3QX9WD')).toBe('K7MF3-QX9WD');
   });
 });

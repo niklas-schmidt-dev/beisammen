@@ -59,6 +59,7 @@ describe('invite preview state', () => {
       buildInviteShareMessage({
         circleName: 'Familie',
         inviteLink: 'beisammen://connect?invite=abc',
+        code: 'K7MF3-QX9WD',
         mode: 'email',
       }),
     ).toContain('persönlich');
@@ -66,6 +67,7 @@ describe('invite preview state', () => {
       buildInviteShareMessage({
         circleName: 'Familie',
         inviteLink: 'beisammen://connect?invite=abc',
+        code: 'K7MF3-QX9WD',
         mode: 'open',
       }),
     ).toContain('einmalig');

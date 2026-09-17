@@ -6,6 +6,7 @@ import { StyleSheet, Text, TextInput } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { InviteQrScanner } from '@/components/invites/InviteQrScanner';
 import { Button, Card, FeedbackToast } from '@/components/ui';
 import { SettingsScreenHeader } from '@/components/settings/SettingsScreenHeader';
 import { FontSize, Radius, Spacing } from '@/constants/theme';
@@ -29,6 +30,7 @@ export default function JoinCircleScreen() {
   const [input, setInput] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useMarkInteractive(true);
 
@@ -62,6 +64,22 @@ export default function JoinCircleScreen() {
     }
   }, [router, setPendingInviteToken, token]);
 
+  const handleScanned = useCallback(
+    (scannedToken: string) => {
+      setIsScannerOpen(false);
+      setInput(scannedToken);
+      setIsSubmitting(true);
+      void setPendingInviteToken(scannedToken)
+        .then(() => {
+          router.push('/invite' as never);
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
+    },
+    [router, setPendingInviteToken],
+  );
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
       <Animated.ScrollView
@@ -78,8 +96,8 @@ export default function JoinCircleScreen() {
             <T>
               <Text style={[styles.cardTitle, { color: theme.text }]}>Einladung einfügen</Text>
               <Text style={[styles.body, { color: theme.textSecondary }]}>
-                Füge den Einladungslink oder Code ein, den du bekommen hast. Die ganze Nachricht
-                geht auch – wir fischen den Link heraus.
+                Gib den Code ein (z.B. K7MF3-QX9WD), füge den Einladungslink ein oder scanne den
+                QR-Code. Die ganze Nachricht geht auch – wir fischen den Link heraus.
               </Text>
             </T>
             <TextInput
@@ -109,6 +127,13 @@ export default function JoinCircleScreen() {
               </T>
             ) : null}
             <Button
+              label={gt('QR-Code scannen')}
+              icon="qr-code-outline"
+              variant="outline"
+              disabled={isSubmitting}
+              onPress={() => setIsScannerOpen(true)}
+            />
+            <Button
               label={gt('Aus Zwischenablage einfügen')}
               icon="clipboard-outline"
               variant="outline"
@@ -130,6 +155,11 @@ export default function JoinCircleScreen() {
         </Animated.View>
       </Animated.ScrollView>
       <FeedbackToast message={feedback} onDismiss={() => setFeedback(null)} />
+      <InviteQrScanner
+        visible={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanned={handleScanned}
+      />
     </SafeAreaView>
   );
 }

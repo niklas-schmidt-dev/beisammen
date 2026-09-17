@@ -227,7 +227,7 @@ export default function AccountScreen() {
 
         <Animated.View entering={enterSection(1)} style={styles.section}>
           <Card style={styles.heroCard}>
-            <Avatar name={profileName} image={profileImage} size="xl" />
+            <Avatar name={profileName} image={profileImage} size="xl" expandable />
             <View style={styles.heroCopy}>
               <Text style={[styles.heroName, { color: theme.text }]} numberOfLines={1}>
                 {profileName}

@@ -114,7 +114,7 @@ scroll down
 wait_stable timeout:1500
 tap "Invite-Link erstellen" type:button
 run "./flows/dismiss-share-sheet.mob"
-wait_for "Erneut teilen" timeout:15000
+wait_for "Code zum Eintippen" timeout:15000
 extract open_invite_link from ~"connect?instance" regex:"(\S+://\S+)"
 scroll down to "Zu Home" max_scrolls:6
 tap "Zu Home"
@@ -305,7 +305,7 @@ scroll down
 wait_stable timeout:1500
 tap "Invite-Link erstellen" type:button
 run "./flows/dismiss-share-sheet.mob"
-wait_for "Erneut teilen" timeout:15000
+wait_for "Code zum Eintippen" timeout:15000
 extract member_invite_link from ~"connect?instance" regex:"(\S+://\S+)"
 scroll down to "Einladungen" max_scrolls:10
 scroll down

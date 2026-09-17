@@ -33,6 +33,16 @@ describe('parseInviteToken', () => {
     ).toBe('tok-9');
   });
 
+  test('normalizes short codes however they were typed', () => {
+    expect(parseInviteToken('k7mf3-qx9wd')).toBe('K7MF3QX9WD');
+    expect(parseInviteToken('K7MF3 QX9WD')).toBe('K7MF3QX9WD');
+    expect(parseInviteToken('k7mf3-qxOwd')).toBe('K7MF3QX0WD');
+    expect(parseInviteToken('https://beisammen.app/connect?invite=k7mf3-qx9wd')).toBe('K7MF3QX9WD');
+    expect(
+      parseInviteToken('Komm in meinen Circle "Familie": https://beisammen.app/connect?invite=K7MF3QX9WD\n\nCode: K7MF3-QX9WD'),
+    ).toBe('K7MF3QX9WD');
+  });
+
   test('rejects unrelated URLs and empty input', () => {
     expect(parseInviteToken('https://example.com/some-page')).toBeNull();
     expect(parseInviteToken('   ')).toBeNull();

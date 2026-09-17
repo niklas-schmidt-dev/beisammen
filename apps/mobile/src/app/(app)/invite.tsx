@@ -72,6 +72,12 @@ export default function InviteAcceptScreen() {
 
     try {
       const accepted = await acceptInvite({ token: pendingInviteToken });
+
+      if (accepted.status !== 'accepted') {
+        setFeedback(gt('Einladung nicht gefunden. Prüfe den Code oder bitte um eine neue Einladung.'));
+        return;
+      }
+
       await clearPendingInviteToken();
       setActiveCircleId(accepted.circleId);
       router.replace('/home');

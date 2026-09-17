@@ -1,5 +1,12 @@
 import { v } from 'convex/values';
 
+import {
+  INVITE_CODE_ALPHABET,
+  INVITE_CODE_LENGTH,
+  formatInviteCode,
+  normalizeInviteCode,
+} from '@beisammen/contracts';
+
 import type { Doc } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
@@ -8,6 +15,7 @@ import { createActivityEventWithInbox } from './lib/activity';
 import { readBaseUrl } from './lib/httpHelpers';
 import { buildInviteLink } from './lib/inviteLinks';
 import { isManageRole, requireCircleMembership, requireViewer } from './lib/viewer';
+import { rateLimiter } from './rateLimit';
 
 export const CIRCLE_INVITE_LIST_LIMIT = 100;
 type InviteMode = 'email' | 'open';
@@ -76,11 +84,47 @@ async function hashInviteToken(token: string): Promise<string> {
   return `sha256:${toHex(digest)}`;
 }
 
+/**
+ * Mints a short invite code from the Crockford alphabet using rejection
+ * sampling, so every symbol is uniformly distributed.
+ */
+function generateInviteCode(): string {
+  const symbols: string[] = [];
+  const bytes = new Uint8Array(INVITE_CODE_LENGTH * 2);
+
+  while (symbols.length < INVITE_CODE_LENGTH) {
+    crypto.getRandomValues(bytes);
+
+    for (const byte of bytes) {
+      // 256 is not a multiple of 32; skip the tail so no symbol is favored.
+      if (byte >= 224) {
+        continue;
+      }
+
+      symbols.push(INVITE_CODE_ALPHABET[byte % INVITE_CODE_ALPHABET.length]);
+
+      if (symbols.length === INVITE_CODE_LENGTH) {
+        break;
+      }
+    }
+  }
+
+  return symbols.join('');
+}
+
+/**
+ * Short codes are matched in their canonical form regardless of how they were
+ * typed; legacy UUID tokens are matched verbatim.
+ */
+function canonicalInviteToken(token: string): string {
+  return normalizeInviteCode(token) ?? token.trim();
+}
+
 async function findInviteByToken(
   ctx: QueryCtx | MutationCtx,
   token: string,
 ): Promise<Doc<'invites'> | null> {
-  const normalizedToken = token.trim();
+  const normalizedToken = canonicalInviteToken(token);
 
   if (!normalizedToken) {
     return null;
@@ -125,7 +169,7 @@ export const create = mutation({
       throw new Error('Invited email is required for email-bound invites.');
     }
 
-    const token = crypto.randomUUID();
+    const token = generateInviteCode();
     const tokenHash = await hashInviteToken(token);
     const inviteId = await ctx.db.insert('invites', {
       circleId: args.circleId,
@@ -141,6 +185,7 @@ export const create = mutation({
     return {
       inviteId,
       token,
+      code: formatInviteCode(token),
       inviteLink: buildInviteLink({ token, instanceBaseUrl: readBaseUrl() }),
     };
   },
@@ -198,6 +243,16 @@ export const preview = query({
   },
   handler: async (ctx, args) => {
     const viewer = await requireViewer(ctx);
+    // Queries cannot consume tokens; check the viewer's budget read-only so
+    // a guessing loop sees the same wall as accept() does.
+    const lookupBudget = await rateLimiter.check(ctx, 'inviteLookupByUser', {
+      key: viewer._id,
+    });
+
+    if (!lookupBudget.ok) {
+      throw new Error('Zu viele Versuche. Bitte warte kurz und versuche es erneut.');
+    }
+
     const invite = await findInviteByToken(ctx, args.token);
 
     if (!invite) {
@@ -246,10 +301,26 @@ export const accept = mutation({
   },
   handler: async (ctx, args) => {
     const viewer = await requireViewer(ctx);
+    // Every accept attempt spends from both budgets: the lookup one so
+    // guessed codes are charged even when they miss, the accept one so a
+    // valid code cannot be replayed in a tight loop.
+    const lookupBudget = await rateLimiter.limit(ctx, 'inviteLookupByUser', {
+      key: viewer._id,
+    });
+    const acceptBudget = await rateLimiter.limit(ctx, 'inviteAcceptByUser', {
+      key: viewer._id,
+    });
+
+    if (!lookupBudget.ok || !acceptBudget.ok) {
+      throw new Error('Zu viele Versuche. Bitte warte kurz und versuche es erneut.');
+    }
+
     const invite = await findInviteByToken(ctx, args.token);
 
+    // A miss returns instead of throwing: a thrown mutation is rolled back,
+    // which would also refund the rate-limit tokens a wrong guess just spent.
     if (!invite) {
-      throw new Error('Invite not found.');
+      return { status: 'not_found' as const };
     }
 
     if (invite.status !== 'pending') {
@@ -306,6 +377,7 @@ export const accept = mutation({
     });
 
     return {
+      status: 'accepted' as const,
       inviteId: invite._id,
       circleId: invite.circleId,
     };
